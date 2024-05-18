@@ -22,6 +22,8 @@ class HunspellLemmatizer:
         fp_aff: str,
         exc: dict[dict[str:str]] = None,
         pos_rules: dict[str:list] = None,
+        # à faire:
+        # rule_lemmatize: Callable = None
     ):
         """crée un objet pour lemmatiser une série de documents.
 
@@ -41,15 +43,14 @@ class HunspellLemmatizer:
         if exc is None:
             exc = viceverser.francais.lemmes_exections.exc
         if pos_rules is None:
-            self.pos_priorities = viceverser.utils.pos_rules.default_list(nlp)
-        else:
-            self.pos_priorities = pos_rules
+            pos_rules = viceverser.utils.pos_rules.default_list(nlp)
 
         # instanciation des objets utilisés par le lemmatizer
         self.lookups = Lookups()
         self.hobj = HunSpell(fp_dic, fp_aff)
         self.inform = Informitif()
         self.nlp = nlp
+        self.pos_priorities = pos_rules
         strings = nlp.vocab.strings
         self.strings = strings
 
@@ -205,6 +206,5 @@ class HunspellLemmatizer:
         """attribue un lemme à chaque token d'un doc."""
 
         for token in doc:
-            if token._.token_class == "mot":
-                self.set_lemma(token)
+            self.set_lemma(token)
         return doc
