@@ -8,7 +8,8 @@ from hunspell import HunSpell
 from spacy.lookups import Lookups
 from informifier import Informitif
 from typing import Union
-import viceverser.francais as fr
+import viceverser.francais
+import viceverser.utils.pos_rules
 
 
 class HunspellLemmatizer:
@@ -38,15 +39,11 @@ class HunspellLemmatizer:
 
         # valeurs par défaut des arguments
         if exc is None:
-            exc = fr.lemmes_exections.exc
+            exc = viceverser.francais.lemmes_exections.exc
         if pos_rules is None:
-            # complète les listes de priorités
-            import viceverser.utils.pos_rules
-
-            self.pos_priorities = self.list_pos_priorities(
-                similarities=pos_similarities,
-                default_priority=pos_default_priority,
-            )
+            self.pos_priorities = viceverser.utils.pos_rules.default_list(nlp)
+        else:
+            self.pos_priorities = pos_rules
 
         # instanciation des objets utilisés par le lemmatizer
         self.lookups = Lookups()
