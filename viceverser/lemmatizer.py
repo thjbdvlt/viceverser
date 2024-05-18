@@ -4,18 +4,24 @@ a) s'il s'agit d'un mot simple, utiliser la fonction `stem` de hunspell pour tro
 b) s'il s'agit d'un mot composé (avec un ou plusieurs trait(s) d'union(s)), découper le mots en ses différents composant et analyser comme en a) chacun de ces composants, puis les aggréger. par exemple: "auteur-compositeur" -> ["auteurice", "compositeurice"] -> "auteurice-compositeurice".
 """
 
-import re
 from hunspell import HunSpell
 from spacy.lookups import Lookups
 from informifier import Informitif
 from typing import Union
-from verbes_speciaux import verbes_speciaux
+import viceverser.francais as fr
 
 
 class HunspellLemmatizer:
     """lemmatise des documents en utilisant hunspell."""
 
-    def __init__(self, nlp, fp_dic: str, fp_aff: str):
+    def __init__(
+        self,
+        nlp,
+        fp_dic: str,
+        fp_aff: str,
+        exc: dict[dict[str:str]] = None,
+        pos_rules: dict[str:list] = None,
+    ):
         """crée un objet pour lemmatiser une série de documents.
 
         nlp:  la pipeline spacy avec le modèle, vocab, etc.
@@ -30,93 +36,35 @@ class HunspellLemmatizer:
         - un objet `Informitif`, issu d'un petit module que j'ai écrit pour ça et qui sert à trouver l'infinitif d'un verbe à partir de l'une de ses formes conjuguée, et de déterminer à quelle sous-groupe il appartient (parmi les verbes du premier groupe). l'idée est de pouvoir, en rencontrant un nouveau verbe, donner à hunspell un modèle pour construire toutes les formes possibles que ce verbe peut prendre.
         """
 
+        # valeurs par défaut des arguments
+        if exc is None:
+            exc = fr.lemmes_exections.exc
+        if pos_rules is None:
+            # complète les listes de priorités
+            import viceverser.utils.pos_rules
+
+            self.pos_priorities = self.list_pos_priorities(
+                similarities=pos_similarities,
+                default_priority=pos_default_priority,
+            )
+
+        # instanciation des objets utilisés par le lemmatizer
         self.lookups = Lookups()
         self.hobj = HunSpell(fp_dic, fp_aff)
         self.inform = Informitif()
         self.nlp = nlp
-        self.strings = nlp.vocab.strings
-        pos_similarities = {
-            "aux": ["verb"],
-            "verb": ["aux"],
-            "noun": ["verb", "aux"],
-            "det": ["cconj", "sconj", "pron", "adp"],
-            "pron": ["det", "cconj", "sconj", "adp"],
-        }
-        pos_default_priority = [
-            "pron",
-            "det",
-            "cconj",
-            "sconj",
-            "aux",
-            "verb",
-            "noun",
-        ]
-        self.pos_priorities = self.list_pos_priorities(
-            similarities=pos_similarities,
-            default_priority=pos_default_priority,
-        )
+        strings = nlp.vocab.strings
+        self.strings = strings
+
+        # ajoute une table pour chaque pos tag
         for i in self.pos_priorities.keys():
             self.lookups.add_table(i, {})
-        v = self.lookups.get_table("verb")
-        s = self.strings
-        for verb in verbes_speciaux:
-            for form in verbes_speciaux[verb]:
-                v.set(s[form], verb)
 
-    def list_pos_priorities(
-        self, similarities: dict, default_priority: list[str]
-    ) -> None:
-        """construit un dictionnaire de proximitié des pos tags.
-
-        `similarities`:  un dictionnaire qui attribue, à chaque pos-tag une liste de pos-tags proches.
-        `default_priority`:  une liste de priorités par défault qui sera utilisée pour compléter `similarities`.
-
-        exemple:
-            similarities={"verb": ["aux"], "cconj": ["sconj", "det"]}
-            default_priority=["noun", "verb", "pron"]
-
-        aucune des deux liste n'a besoin d'être exhaustive. elle sera complétée par les tags possibles (récupérée dans les labels du morphologizer).
-
-        l'attribution des pos-tags n'est pas toujours très précise pour le français avec les modèles actuellement proposés par spacy. or, l'attribution d'un lemme dépend de son pos-tag (par exemple: sommes:noun->somme  sommes:verb->être). je fixe donc des règles qui disent:
-        si `pos=noun`, alors regarder d'abord si un lemme est fixé pour ce mot en tant que nom. s'il n'y a aucun résultat, alors regarder si un lemme est fixé pour ce mot en tant que verbe, puis si ce n'est pas le cas, en tant qu'auxiliaire, etc., jusqu'à trouvé un mot ou jusqu'à avoir épuisé toutes les catégories grammaticalse, et donc tous les mots du lexique.
-        chaque catégorie est proches de certaines catégorie, est éloignée d'autres. donc en cas d'erreur, un mot identifié à une certaine catégorie est plus ou moins susceptible d'appartenir en fait à certaines catégorie qu'à d'autres. typiquement, les `aux` sont toujours des `verb` en français, donc on peut imaginer un mot taggé par erreur comme `aux`: on a plus de chance de le trouver en fait dans les `verb` que dans les `det`. un autre cas: les modèles proposés par spacy pour le français ne reconnaissent pas les verbes à l'infinitif présent, qui seront toujours taggés comme `noun`. donc si un mot avec la catégorie `noun` n'existe pas, le mieux à faire est de regarder si le même mot avec la catégorie `verb`, lui, existe.
-
-        1. récupère la liste des tags possibles (dans le morphologizer).
-        2. complète la liste de priorité par défault avec les tags possibles manquants (placés à la fin).
-        3. compléter le dictionnaire de similarités.
-        4. ajouter au dictionnaire de similarités, pour chaque pos-tag, une entrée sous forme de tuple ("adp", tag), ex. ("adp", "noun"), qui sera utilisée pour la lemmatisation des mots composés, car les parties qui composent les mots composés sont généralement:
-            - des adpositions (suffixes ou préfixes): socio-critique.
-            - des mots de même nature que le mot composé (maison-bateau).
-        """
-
-        posstags = self.list_pos_tags()
-        default_priority.extend([i for i in posstags if i not in default_priority])
-        for tag in default_priority:
-            if tag in similarities.keys():
-                prio = similarities[tag]
-                missing = [i for i in default_priority if i not in prio]
-                prio.extend(missing)
-            else:
-                prio = default_priority
-            prio.remove(tag)
-            prio.insert(0, tag)
-            similarities[("adp", tag)] = ["adp"] + [
-                i for i in prio if i != "adp"
-            ]
-            similarities[tag] = prio
-        return similarities
-
-    def list_pos_tags(self) -> list[str]:
-        """récupère la liste des part-of-speech tags du morphologizer."""
-
-        re_pos = re.compile(r"POS=(\w+)")
-        a = []
-        labels = self.nlp.get_pipe("morphologizer").labels
-        for l in labels:
-            r = re_pos.search(l)
-            if r:
-                a.append(r.group(1).lower())
-        return sorted(set(a))
+        # ajoute les excetions dans les tables
+        for pos in exc.keys():
+            t = self.lookups.get_table(pos)
+            for word, lemme in exc[pos].items():
+                t.set(strings[word], lemme)
 
     def rule_lemmatize(self, word: str, upos: str) -> str:
         """lemmatise un mot à l'aide de règles spécifiques à son POS.
@@ -128,7 +76,7 @@ class HunspellLemmatizer:
         dans les autres cas, retourne simplement le mot lui-même, sans modification.
         """
 
-        if upos == "verb":
+        if upos in ("verb", "aux"):
             lemma, like = self.inform(word)
             self.hobj.add_with_affix(lemma, like)
             return lemma

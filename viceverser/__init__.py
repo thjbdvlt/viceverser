@@ -1,0 +1,1 @@
+from viceverser.lemmatizer import HunspellLemmatizer
