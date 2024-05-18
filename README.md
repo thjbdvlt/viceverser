@@ -7,7 +7,7 @@ mots composés
 
 les lemmes des mots composés ("artistes-peintres", "autrice-compositrice-interprète") sont obtenus par la concaténation des lemmes de leurs composants: "artistes-peintres" deviendra "artiste-peintres", les deux mots "artistes" et "peintres" ayant été mis au singulier. si le lexique considère que "auteurice" est le lemme de "autrice", alors "autrice-compositrice" deviendra "auteurice-compositeurice".
 
-l'avantage de cette méthode est qu'elle ne nécessite pas de connaître à l'avance tous les mots composés possibles (virtuellement infinis), et peut au contraire sur la base de règles prédictibles lemmatiser des mots nouveaux. elle peut toutefois produire des résultats déconcertants qui pourront nécessiter l'utilisation d'une liste d'exceptions, sans quoi "vice-versa" deviendra par exemple "vice-verser" (_versa_ étant susceptible d'être pris pour une forme conjuguée de _verser_):
+l'avantage de cette méthode est qu'elle ne nécessite pas de connaître à l'avance tous les mots composés possibles (virtuellement infinis). elle peut toutefois produire des résultats déconcertants qui pourront nécessiter l'utilisation d'une liste d'exceptions, sans quoi "vice-versa" deviendra par exemple "vice-verser":
 
 | mot          | lemme          |
 | --           | --             |
