@@ -2,29 +2,6 @@ lemmatisation du français avec [hunspell](http://hunspell.github.io/)[^1] pour 
 
 [^1]: en utilisant [pyhunspell](https://github.com/pyhunspell/pyhunspell), un module qui permet de facilement utiliser hunspell en python.
 
-usage
------
-
-```python
-import spacy
-import viceverser
-
-
-nlp = spacy.load("fr_core_news_lg")
-
-
-@spacy.Language.factory("viceverser_lemmatizer")
-def create_hunspell_lemmatizer(nlp, name="viceverser_lemmatizer"):
-    fp_dic = "./fr_xii.dic"
-    fp_aff = "./fr_xii.aff"
-    return viceverser.Lemmatizer(
-        nlp=nlp, fp_dic=paths.fp_dic, fp_aff=paths.fp_aff
-    )
-
-
-nlp.add_pipe("hunspell_lemmatizer", after="morphologizer")
-```
-
 mots composés
 -------------
 
@@ -60,6 +37,34 @@ rule lemmatizer
 ---------------
 
 dans certains cas, le mot ne correspond à aucune forme répertoriée dans le lexique hunspell. pour ces cas, une fonction est définie qui construit le lemme par application de règles (_rule-based lemmatizer_). celle proposée par défaut est relative au _part-of-speech tag_: s'il s'agit d'un adjectif ou d'un nom, j'enlève simplement les pluriels en `s` ou `x`, s'il s'agit d'un verbe, je considère d'un verbe du premier groupe car la quasi-totalité des _néo-verbes_ sont des verbes du premier groupe, et j'essaie de reconstruire l'infinitif du verbe à partir de sa forme (ce que je fais en utilisant un autre mini-module que j'ai écrit pour ça: [informifier]), dans tous les autres cas, le lemme est le mot inchangé.
+
+usage
+-----
+
+```python
+import spacy
+import viceverser
+
+@spacy.Language.factory("viceverser_lemmatizer")
+def create_hunspell_lemmatizer(nlp, name="viceverser_lemmatizer"):
+    fp_dic = "./fr_xii.dic"
+    fp_aff = "./fr_xii.aff"
+    return viceverser.Lemmatizer(
+        nlp=nlp, fp_dic=paths.fp_dic, fp_aff=paths.fp_aff
+    )
+
+nlp = spacy.load("fr_core_news_lg")
+nlp.add_pipe("viceverser_lemmatizer", after="morphologizer")
+```
+
+installation
+------------
+
+```bash
+git clone https://github.com/thjbdvlt/viceverser viceverser
+cd viceverser
+pip install .
+```
 
 dependancies
 ------------
