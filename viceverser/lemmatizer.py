@@ -49,7 +49,9 @@ class Lemmatizer:
 
             pos_rules = default_list(nlp)
         if rule_lemmatize is None:
-            from viceverser.francais.rule_lemmatize import RuleLemmatizer
+            from viceverser.francais.rule_lemmatize import (
+                RuleLemmatizer,
+            )
 
             rule_lemmatize = RuleLemmatizer()
 

@@ -39,7 +39,9 @@ def list_pos_priorities(
         - des mots de même nature que le mot composé (maison-bateau).
     """
 
-    default_priority.extend([i for i in postags if i not in default_priority])
+    default_priority.extend(
+        [i for i in postags if i not in default_priority]
+    )
     for tag in default_priority:
         if tag in similarities.keys():
             prio = similarities[tag]
@@ -49,12 +51,16 @@ def list_pos_priorities(
             prio = default_priority
         prio.remove(tag)
         prio.insert(0, tag)
-        similarities[("adp", tag)] = ["adp"] + [i for i in prio if i != "adp"]
+        similarities[("adp", tag)] = ["adp"] + [
+            i for i in prio if i != "adp"
+        ]
         similarities[tag] = prio
     return similarities
 
 
-def get_pos_tag_pipe(nlp, pipename: str = "morphologizer") -> list[str]:
+def get_pos_tag_pipe(
+    nlp, pipename: str = "morphologizer"
+) -> list[str]:
     """récupère la liste des part-of-speech tags d'un pipe component (par défault: le morphologizer)."""
 
     re_pos = re.compile(r"POS=(\w+)")
