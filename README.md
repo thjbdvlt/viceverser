@@ -2,6 +2,29 @@ lemmatisation du français avec [hunspell](http://hunspell.github.io/)[^1] pour 
 
 [^1]: en utilisant [pyhunspell](https://github.com/pyhunspell/pyhunspell), un module qui permet de facilement utiliser hunspell en python.
 
+usage
+-----
+
+```python
+import spacy
+import viceverser
+
+
+nlp = spacy.load("fr_core_news_lg")
+
+
+@spacy.Language.factory("viceverser_lemmatizer")
+def create_hunspell_lemmatizer(nlp, name="viceverser_lemmatizer"):
+    fp_dic = "./fr_xii.dic"
+    fp_aff = "./fr_xii.aff"
+    return viceverser.Lemmatizer(
+        nlp=nlp, fp_dic=paths.fp_dic, fp_aff=paths.fp_aff
+    )
+
+
+nlp.add_pipe("hunspell_lemmatizer", after="morphologizer")
+```
+
 mots composés
 -------------
 
