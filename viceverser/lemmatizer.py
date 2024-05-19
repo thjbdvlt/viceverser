@@ -4,12 +4,13 @@ a) s'il s'agit d'un mot simple, utiliser la fonction `stem` de hunspell pour tro
 b) s'il s'agit d'un mot composé (avec un ou plusieurs trait(s) d'union(s)), découper le mots en ses différents composant et analyser comme en a) chacun de ces composants, puis les aggréger. par exemple: "auteur-compositeur" -> ["auteurice", "compositeurice"] -> "auteurice-compositeurice".
 """
 
-from hunspell import HunSpell
-from spacy.lookups import Lookups
-from informifier import Informitif
-from typing import Union
 import viceverser.francais
 import viceverser.utils.pos_rules
+from hunspell import HunSpell
+from spacy.lookups import Lookups
+from typing import Union, Callable
+from spacy.tokens.doc import Doc
+from spacy.tokens.token import Token
 
 
 class HunspellLemmatizer:
@@ -22,8 +23,7 @@ class HunspellLemmatizer:
         fp_aff: str,
         exc: dict[dict[str:str]] = None,
         pos_rules: dict[str:list] = None,
-        # à faire:
-        # rule_lemmatize: Callable = None
+        rule_lemmatize: Callable = None,
     ):
         """crée un objet pour lemmatiser une série de documents.
 
@@ -34,9 +34,11 @@ class HunspellLemmatizer:
         les mots du lexique hunspell doivent avoir l'attribut `po:` (part-of-speech).
 
         pour initier le lemmatiser, j'instancie différents objets qui vont me servir pour la lemmatisation:
-        - un objet `Lookups` dans lequel mettre des tables d'accessions rapides, pour éviter de répéter inutilement des opérations.
-        - un objet `HunSpell` à partir d'un fichier .dic (qui définit un lexique de base) et .aff (qui définit des règles combinatoires de variations autour du lexique).
-        - un objet `Informitif`, issu d'un petit module que j'ai écrit pour ça et qui sert à trouver l'infinitif d'un verbe à partir de l'une de ses formes conjuguée, et de déterminer à quelle sous-groupe il appartient (parmi les verbes du premier groupe). l'idée est de pouvoir, en rencontrant un nouveau verbe, donner à hunspell un modèle pour construire toutes les formes possibles que ce verbe peut prendre.
+            - un objet `Lookups` dans lequel mettre des tables d'accessions rapides, pour éviter de répéter inutilement des opérations.
+            - un objet `HunSpell` à partir d'un fichier .dic (qui définit un lexique de base) et .aff (qui définit des règles combinatoires de variations autour du lexique).
+
+        si aucune fonction n'est passée pour `rule_lemmatize`:
+            - un objet `Informitif`, issu d'un petit module que j'ai écrit pour ça et qui sert à trouver l'infinitif d'un verbe à partir de l'une de ses formes conjuguée, et de déterminer à quelle sous-groupe il appartient (parmi les verbes du premier groupe). l'idée est de pouvoir, en rencontrant un nouveau verbe, donner à hunspell un modèle pour construire toutes les formes possibles que ce verbe peut prendre.
         """
 
         # valeurs par défaut des arguments
@@ -44,13 +46,18 @@ class HunspellLemmatizer:
             exc = viceverser.francais.lemmes_exections.exc
         if pos_rules is None:
             pos_rules = viceverser.utils.pos_rules.default_list(nlp)
+        if rule_lemmatize is None:
+            from informifier import Informitif
+
+            self.inform = Informitif()
+            rule_lemmatize = self.inform
 
         # instanciation des objets utilisés par le lemmatizer
         self.lookups = Lookups()
         self.hobj = HunSpell(fp_dic, fp_aff)
-        self.inform = Informitif()
         self.nlp = nlp
         self.pos_priorities = pos_rules
+        self.rule_lemmatize = rule_lemmatize
         strings = nlp.vocab.strings
         self.strings = strings
 
@@ -63,25 +70,6 @@ class HunspellLemmatizer:
             t = self.lookups.get_table(pos)
             for word, lemme in exc[pos].items():
                 t.set(strings[word], lemme)
-
-    def rule_lemmatize(self, word: str, upos: str) -> str:
-        """lemmatise un mot à l'aide de règles spécifiques à son POS.
-
-        verb: reconstitue l'infinitif d'un verbe. ajoute ensuite le verbe dans le lexique d'hunspell avec des affixes (à partir d'un verbe du même groupe), afin qu'il déduise les variations possibles (conjugaison).
-
-        noun+adj: enlève un éventuel "s" et "x" final.
-
-        dans les autres cas, retourne simplement le mot lui-même, sans modification.
-        """
-
-        if upos in ("verb", "aux"):
-            lemma, like = self.inform(word)
-            self.hobj.add_with_affix(lemma, like)
-            return lemma
-        elif word[-1] in ("x", "s") and upos in ("noun", "adj"):
-            return word[:-1]
-        else:
-            return word
 
     def find_lemma(self, word, norm, upos) -> str:
         """trouve le lemme d'un mot.
@@ -186,23 +174,23 @@ class HunspellLemmatizer:
                 return d[t]
         return None
 
-    def set_lemma(self, token) -> None:
+    def set_lemma(self, token: Token) -> None:
         """détermine le lemme d'un token."""
 
-        word = token.norm_
-        norm = token.norm
-        upos = token.pos_.lower()
+        word: str = token.norm_
+        norm: int = token.norm
+        upos: str = token.pos_.lower()
         x = self.lookups.get_table(upos).get(norm)
         if x is not None:
             token.lemma_ = x
             return
         elif "-" in token.norm_:
-            fn = self.find_lemma_composed
+            fn: Callable = self.find_lemma_composed
         else:
-            fn = self.find_lemma
+            fn: Callable = self.find_lemma
         token.lemma_ = fn(word=word, norm=norm, upos=upos)
 
-    def __call__(self, doc):
+    def __call__(self, doc: Doc) -> Doc:
         """attribue un lemme à chaque token d'un doc."""
 
         for token in doc:
