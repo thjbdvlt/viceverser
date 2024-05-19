@@ -42,12 +42,15 @@ class Lemmatizer:
         # valeurs par défaut des arguments
         if exc is None:
             from viceverser.francais.lemmes_exceptions import exc
+
             exc = exc
         if pos_rules is None:
             from viceverser.utils.pos_rules import default_list
+
             pos_rules = default_list(nlp)
         if rule_lemmatize is None:
             from viceverser.francais.rule_lemmatize import RuleLemmatizer
+
             rule_lemmatize = RuleLemmatizer()
 
         # instanciation des objets utilisés par le lemmatizer

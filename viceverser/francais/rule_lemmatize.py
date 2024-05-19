@@ -2,7 +2,6 @@ import informifier
 
 
 class RuleLemmatizer:
-
     def __init__(self):
         self.inform = informifier.Informitif()
 
