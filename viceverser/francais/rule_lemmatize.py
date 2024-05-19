@@ -13,7 +13,7 @@ class RuleLemmatizer:
         dans les autres cas, retourne simplement le mot lui-même, sans modification.
         """
 
-        if upos in ("verb", "aux"):
+        if upos in ("verb", "aux") and word[-2:] != "er":
             lemma, _ = self.inform(word)
             return lemma
         elif word[-1] in ("x", "s") and upos in ("noun", "adj"):

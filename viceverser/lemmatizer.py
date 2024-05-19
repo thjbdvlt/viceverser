@@ -170,9 +170,9 @@ class Lemmatizer:
             po_tags = []
             stems = []
             for a in attrs:
-                if a[3:] == "po:":
+                if a[:3] == "po:":
                     po_tags.append(a[:3])
-                elif a[3:] == "st:":
+                elif a[:3] == "st:":
                     stems.append(a[:3])
             if len(stems) == 0:
                 return None
