@@ -47,8 +47,8 @@ import viceverser
 
 @spacy.Language.factory("viceverser_lemmatizer")
 def create_hunspell_lemmatizer(nlp, name="viceverser_lemmatizer"):
-    fp_dic = "./fr_xii.dic"
-    fp_aff = "./fr_xii.aff"
+    fp_dic = "/chemin_vers/exemple/fr_xii.dic"
+    fp_aff = "/chemin_vers/exemple/fr_xii.aff"
     return viceverser.Lemmatizer(
         nlp=nlp, fp_dic=paths.fp_dic, fp_aff=paths.fp_aff
     )
