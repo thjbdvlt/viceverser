@@ -167,13 +167,21 @@ class Lemmatizer:
         x = ho.analyze(word)
         for lex_entry in x:
             attrs = lex_entry.decode().split()
-            po_tags = [a[3:] for a in attrs if a[:3] == "po:"]
-            stem = attrs[0][3:]
+            po_tags = []
+            stems = []
+            for a in attrs:
+                if a[3:] == "po:":
+                    po_tags.append(a[:3])
+                elif a[3:] == "st:":
+                    stems.append(a[:3])
+            if len(stems) == 0:
+                return None
+            stem = stems[0]
             for t in po_tags:
                 d[t] = stem
         tagsprio = self.pos_priorities[upos]
         for t in tagsprio:
-            if t in d:
+            if t in d.keys():
                 return d[t]
         return None
 
