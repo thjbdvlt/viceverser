@@ -2,7 +2,7 @@ import re
 
 
 def default_list(nlp):
-    from viceverser.francais import pos_prioritie as pp
+    from viceverser.francais import pos_priorities as pp
 
     postags = get_pos_tag_pipe(nlp=nlp, pipename="morphologizer")
     priorities = list_pos_priorities(
@@ -54,12 +54,12 @@ def list_pos_priorities(
     return similarities
 
 
-def get_pos_tag_pipe(self, pipename: str = "morphologizer") -> list[str]:
+def get_pos_tag_pipe(nlp, pipename: str = "morphologizer") -> list[str]:
     """récupère la liste des part-of-speech tags d'un pipe component (par défault: le morphologizer)."""
 
     re_pos = re.compile(r"POS=(\w+)")
     a = []
-    labels = self.nlp.get_pipe(pipename).labels
+    labels = nlp.get_pipe(pipename).labels
     for l in labels:
         r = re_pos.search(l)
         if r:

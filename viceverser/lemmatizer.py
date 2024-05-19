@@ -4,8 +4,6 @@ a) s'il s'agit d'un mot simple, utiliser la fonction `stem` de hunspell pour tro
 b) s'il s'agit d'un mot composé (avec un ou plusieurs trait(s) d'union(s)), découper le mots en ses différents composant et analyser comme en a) chacun de ces composants, puis les aggréger. par exemple: "auteur-compositeur" -> ["auteurice", "compositeurice"] -> "auteurice-compositeurice".
 """
 
-import viceverser.francais
-import viceverser.utils.pos_rules
 from hunspell import HunSpell
 from spacy.lookups import Lookups
 from typing import Union, Callable
@@ -13,7 +11,7 @@ from spacy.tokens.doc import Doc
 from spacy.tokens.token import Token
 
 
-class HunspellLemmatizer:
+class Lemmatizer:
     """lemmatise des documents en utilisant hunspell."""
 
     def __init__(
@@ -43,14 +41,14 @@ class HunspellLemmatizer:
 
         # valeurs par défaut des arguments
         if exc is None:
-            exc = viceverser.francais.lemmes_exections.exc
+            from viceverser.francais.lemmes_exceptions import exc
+            exc = exc
         if pos_rules is None:
-            pos_rules = viceverser.utils.pos_rules.default_list(nlp)
+            from viceverser.utils.pos_rules import default_list
+            pos_rules = default_list(nlp)
         if rule_lemmatize is None:
-            from informifier import Informitif
-
-            self.inform = Informitif()
-            rule_lemmatize = self.inform
+            from viceverser.francais.rule_lemmatize import RuleLemmatizer
+            rule_lemmatize = RuleLemmatizer()
 
         # instanciation des objets utilisés par le lemmatizer
         self.lookups = Lookups()
