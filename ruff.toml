@@ -1,0 +1,7 @@
+exclude = []
+line-length = 70
+
+[format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = false
