@@ -41,6 +41,8 @@ dans certains cas, le mot ne correspond à aucune forme répertoriée dans le le
 usage
 -----
 
+pour l'ajouter comme composant d'une _pipeline_:
+
 ```python
 import spacy
 import viceverser
@@ -50,12 +52,15 @@ def create_hunspell_lemmatizer(nlp, name="viceverser_lemmatizer"):
     fp_dic = "/chemin/vers/exemple/fr_xii.dic"
     fp_aff = "/chemin/vers/exemple/fr_xii.aff"
     return viceverser.Lemmatizer(
-        nlp=nlp, fp_dic=paths.fp_dic, fp_aff=paths.fp_aff
+        nlp=nlp,
+        fp_dic=paths.fp_dic,
+        fp_aff=paths.fp_aff
     )
 
 nlp = spacy.load("fr_core_news_lg")
 nlp.add_pipe("viceverser_lemmatizer", after="morphologizer")
 ```
+
 
 installation
 ------------
