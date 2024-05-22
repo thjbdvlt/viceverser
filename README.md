@@ -36,7 +36,7 @@ la fonction prend, dans l'ordre, chacun de ces tags et regarde si un lemme dans 
 rule lemmatizer
 ---------------
 
-dans certains cas, le mot ne correspond à aucune forme répertoriée dans le lexique hunspell. pour ces cas, une fonction est définie qui construit le lemme par application de règles (_rule-based lemmatizer_). celle proposée par défaut est relative au _part-of-speech tag_: s'il s'agit d'un adjectif ou d'un nom, j'enlève simplement les pluriels en `s` ou `x`, s'il s'agit d'un verbe, je considère d'un verbe du premier groupe car la quasi-totalité des _néo-verbes_ sont des verbes du premier groupe, et j'essaie de reconstruire l'infinitif du verbe à partir de sa forme (ce que je fais en utilisant un autre mini-module que j'ai écrit pour ça: [informifier]), dans tous les autres cas, le lemme est le mot inchangé.
+dans certains cas, le mot ne correspond à aucune forme répertoriée dans le lexique hunspell. pour ces cas, une fonction est définie qui construit le lemme par application de règles (_rule-based lemmatization_). celle proposée par défaut est relative au _part-of-speech tag_: s'il s'agit d'un adjectif ou d'un nom, j'enlève simplement les pluriels en `s` ou `x`, s'il s'agit d'un verbe, je considère d'un verbe du premier groupe car la quasi-totalité des _néo-verbes_ sont des verbes du premier groupe, et j'essaie de reconstruire l'infinitif du verbe à partir de sa forme (ce que je fais en utilisant un autre mini-module que j'ai écrit pour ça: [informifier]), dans tous les autres cas, le lemme est le mot inchangé.
 
 usage
 -----
@@ -60,7 +60,6 @@ def create_hunspell_lemmatizer(nlp, name="viceverser_lemmatizer"):
 nlp = spacy.load("fr_core_news_lg")
 nlp.add_pipe("viceverser_lemmatizer", after="morphologizer")
 ```
-
 
 installation
 ------------
