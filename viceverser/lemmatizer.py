@@ -76,7 +76,7 @@ class Lemmatizer:
         for pos in exc.keys():
             t = self.lookups.get_table(pos)
             for word, lemme in exc[pos].items():
-                t.set(strings[word], {"stem": lemme, "flex": None})
+                t.set(strings[word], {"stem": lemme, "morph": None})
 
     def find_lemma(self, word, norm, upos) -> str:
         """trouve le lemme d'un mot.
@@ -102,7 +102,7 @@ class Lemmatizer:
             return x
 
         x = self.rule_lemmatize(word=word, upos=upos)
-        y = {"stem": x, "flex": None}
+        y = {"stem": x, "morph": None}
         l.set(norm, y)
         return y
 
@@ -130,15 +130,15 @@ class Lemmatizer:
             if s.strip() != ""
         ]
         lemme_ = "-".join([s["stem"] for s in subwords])
-        flex = [s["flex"] for s in subwords]
+        morph = [s["morph"] for s in subwords]
         composednorm = strings[lemme_]
         x = l.get(composednorm)
         if x is not None:
-            y = {"stem": x, "flex": flex}
+            y = {"stem": x, "morph": morph}
             l.set(norm, y)
             return y
         else:
-            y = {"stem": lemme_, "flex": flex}
+            y = {"stem": lemme_, "morph": morph}
             l.set(norm, y)
             l.set(composednorm, y)
             return y
@@ -186,7 +186,7 @@ class Lemmatizer:
                 return None
             stem = stems[0]
             for t in po_tags:
-                d[t] = {"stem": stem, "flex": attrs}
+                d[t] = {"stem": stem, "morph": attrs}
         tagsprio = self.pos_priorities[upos]
         for t in tagsprio:
             if t in d.keys():
@@ -202,7 +202,7 @@ class Lemmatizer:
         x = self.lookups.get_table(upos).get(norm)
         if x is not None:
             token.lemma_ = x["stem"]
-            token._.viceverser = x["flex"]
+            token._.viceverser = x["morph"]
             return
         elif "-" in token.norm_:
             fn: Callable = self.find_lemma_composed
@@ -210,7 +210,7 @@ class Lemmatizer:
             fn: Callable = self.find_lemma
         d = fn(word=word, norm=norm, upos=upos)
         token.lemma_ = d["stem"]
-        token._.viceverser = d["flex"]
+        token._.viceverser = d["morph"]
 
     def __call__(self, doc: Doc) -> Doc:
         """attribue un lemme à chaque token d'un doc."""
