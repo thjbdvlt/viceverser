@@ -76,7 +76,7 @@ class Lemmatizer:
         for pos in exc.keys():
             t = self.lookups.get_table(pos)
             for word, lemme in exc[pos].items():
-                t.set(strings[word], {'stem': lemme, 'flex': None})
+                t.set(strings[word], {"stem": lemme, "flex": None})
 
     def find_lemma(self, word, norm, upos) -> str:
         """trouve le lemme d'un mot.
@@ -130,15 +130,15 @@ class Lemmatizer:
             if s.strip() != ""
         ]
         lemme_ = "-".join([s["stem"] for s in subwords])
-        flex = [s['flex'] for s in subwords]
+        flex = [s["flex"] for s in subwords]
         composednorm = strings[lemme_]
         x = l.get(composednorm)
         if x is not None:
-            y = {'stem': x, 'flex': flex}
+            y = {"stem": x, "flex": flex}
             l.set(norm, y)
             return y
         else:
-            y = {'stem': lemme_, 'flex': flex}
+            y = {"stem": lemme_, "flex": flex}
             l.set(norm, y)
             l.set(composednorm, y)
             return y
@@ -201,7 +201,7 @@ class Lemmatizer:
         upos: str = token.pos_.lower()
         x = self.lookups.get_table(upos).get(norm)
         if x is not None:
-            token.lemma_ = x['stem']
+            token.lemma_ = x["stem"]
             token._.viceverser = x["flex"]
             return
         elif "-" in token.norm_:
@@ -209,8 +209,8 @@ class Lemmatizer:
         else:
             fn: Callable = self.find_lemma
         d = fn(word=word, norm=norm, upos=upos)
-        token.lemma_ = d['stem']
-        token._.viceverser = d['flex']
+        token.lemma_ = d["stem"]
+        token._.viceverser = d["flex"]
 
     def __call__(self, doc: Doc) -> Doc:
         """attribue un lemme à chaque token d'un doc."""
