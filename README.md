@@ -38,6 +38,11 @@ rule lemmatizer
 
 dans certains cas, le mot ne correspond à aucune forme répertoriée dans le lexique hunspell. pour ces cas, une fonction est définie qui construit le lemme par application de règles (_rule-based lemmatization_). celle proposée par défaut est relative au _part-of-speech tag_: s'il s'agit d'un adjectif ou d'un nom, j'enlève simplement les pluriels en `s` ou `x`, s'il s'agit d'un verbe, je considère d'un verbe du premier groupe car la quasi-totalité des _néo-verbes_ sont des verbes du premier groupe, et j'essaie de reconstruire l'infinitif du verbe à partir de sa forme (ce que je fais en utilisant un autre mini-module que j'ai écrit pour ça: [informifier]), dans tous les autres cas, le lemme est le mot inchangé.
 
+morphologie
+-----------
+
+puisqu'une analyse avec hunspell est menée, autant utiliser également les toutes les informations morphologiques: elles sont placées dans l'attribut `Token._.viceverser`, sans transformation.
+
 usage
 -----
 
