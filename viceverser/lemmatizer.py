@@ -55,6 +55,10 @@ class Lemmatizer:
 
             rule_lemmatize = RuleLemmatizer()
 
+        # ajoute l'extension si elle n'existe pas
+        if not Token.has_extension("viceverser"):
+            Token.set_extension("viceverser", default=None)
+
         # instanciation des objets utilisés par le lemmatizer
         self.lookups = Lookups()
         self.hobj = HunSpell(fp_dic, fp_aff)
@@ -68,11 +72,11 @@ class Lemmatizer:
         for i in self.pos_priorities.keys():
             self.lookups.add_table(i, {})
 
-        # ajoute les excetions dans les tables
+        # ajoute les exceptions dans les tables
         for pos in exc.keys():
             t = self.lookups.get_table(pos)
             for word, lemme in exc[pos].items():
-                t.set(strings[word], lemme)
+                t.set(strings[word], {'stem': lemme, 'flex': None})
 
     def find_lemma(self, word, norm, upos) -> str:
         """trouve le lemme d'un mot.
@@ -98,8 +102,9 @@ class Lemmatizer:
             return x
 
         x = self.rule_lemmatize(word=word, upos=upos)
-        l.set(norm, x)
-        return x
+        y = {"stem": x, "flex": None}
+        l.set(norm, y)
+        return y
 
     def find_lemma_composed(self, word, norm, upos):
         """trouve le lemme d'un mot composé."""
@@ -124,16 +129,19 @@ class Lemmatizer:
             for s in word.split("-")
             if s.strip() != ""
         ]
-        lemme_ = "-".join(subwords)
+        lemme_ = "-".join([s["stem"] for s in subwords])
+        flex = [s['flex'] for s in subwords]
         composednorm = strings[lemme_]
         x = l.get(composednorm)
         if x is not None:
-            l.set(norm, x)
-            return x
+            y = {'stem': x, 'flex': flex}
+            l.set(norm, y)
+            return y
         else:
-            l.set(norm, lemme_)
-            l.set(composednorm, lemme_)
-            return lemme_
+            y = {'stem': lemme_, 'flex': flex}
+            l.set(norm, y)
+            l.set(composednorm, y)
+            return y
 
     def search_lemma_hunspell(
         self, word: str, upos: str
@@ -171,14 +179,14 @@ class Lemmatizer:
             stems = []
             for a in attrs:
                 if a[:3] == "po:":
-                    po_tags.append(a[:3])
+                    po_tags.append(a[3:])
                 elif a[:3] == "st:":
-                    stems.append(a[:3])
+                    stems.append(a[3:])
             if len(stems) == 0:
                 return None
             stem = stems[0]
             for t in po_tags:
-                d[t] = stem
+                d[t] = {"stem": stem, "flex": attrs}
         tagsprio = self.pos_priorities[upos]
         for t in tagsprio:
             if t in d.keys():
@@ -193,13 +201,16 @@ class Lemmatizer:
         upos: str = token.pos_.lower()
         x = self.lookups.get_table(upos).get(norm)
         if x is not None:
-            token.lemma_ = x
+            token.lemma_ = x['stem']
+            token._.viceverser = x["flex"]
             return
         elif "-" in token.norm_:
             fn: Callable = self.find_lemma_composed
         else:
             fn: Callable = self.find_lemma
-        token.lemma_ = fn(word=word, norm=norm, upos=upos)
+        d = fn(word=word, norm=norm, upos=upos)
+        token.lemma_ = d['stem']
+        token._.viceverser = d['flex']
 
     def __call__(self, doc: Doc) -> Doc:
         """attribue un lemme à chaque token d'un doc."""
