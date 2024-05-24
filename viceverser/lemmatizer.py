@@ -130,14 +130,13 @@ class Lemmatizer:
             if s.strip() != ""
         ]
         lemme_ = "-".join([s["stem"] for s in subwords])
-        morph = [s["morph"] for s in subwords]
         composednorm = strings[lemme_]
         x = l.get(composednorm)
         if x is not None:
-            y = {"stem": x, "morph": morph}
-            l.set(norm, y)
-            return y
+            l.set(norm, x)
+            return x
         else:
+            morph = [s["morph"] for s in subwords]
             y = {"stem": lemme_, "morph": morph}
             l.set(norm, y)
             l.set(composednorm, y)
