@@ -1,6 +1,9 @@
-lemmatisation du français avec [hunspell](http://hunspell.github.io/)[^1] pour [spacy](https://spacy.io/api).
+lemmatisation du français avec [hunspell](http://hunspell.github.io/) pour [spacy](https://spacy.io/api).
 
-[^1]: en utilisant [pyhunspell](https://github.com/pyhunspell/pyhunspell), un module qui permet de facilement utiliser hunspell en python.
+pourquoi
+--------
+
+le format de HunSpell, avec ses fichiers `.dic` et `.aff`, étant facile à éditer pour correspondre à des usages linguistiques spécifiques (règles de flexions pour l'écriture inclusive, ajout de mots, etc.), il peut en partie remplacer (pour la lemmatisation) l'objet `Vocab` dans les cas où l'on ne souhaite (ou ne veut) pas entraîner un modèle.
 
 mots composés
 -------------
@@ -79,5 +82,5 @@ dependancies
 ------------
 
 - spacy
-- pyhunspell
+- [pyhunspell](https://github.com/pyhunspell/pyhunspell)
 - optionnelle: [informifier](https://github.com/thjbdvlt/informifier)
