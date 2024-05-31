@@ -4,9 +4,28 @@ a) s'il s'agit d'un mot simple, utiliser la fonction `stem` de hunspell pour tro
 b) s'il s'agit d'un mot composé (avec un ou plusieurs trait(s) d'union(s)), découper le mots en ses différents composant et analyser comme en a) chacun de ces composants, puis les aggréger. par exemple: "auteur-compositeur" -> ["auteurice", "compositeurice"] -> "auteurice-compositeurice".
 """
 
-from hunspell import HunSpell
-from spacy.lookups import Lookups
-from spacy.tokens.token import Token
+import hunspell
+import spacy.lookups
+import spacy.tokens.token
+import itertools
+
+
+def morph_to_dict(morph):
+    """Convert a morphological analysis from Hunspell to a dict.
+
+    Args:
+        morph (list[str]): the morphological analysis as provided by hunspell.
+
+    Returns (dict): a dict containing the morphological analysis, organised in a 'key-values' format.
+    """
+
+    x = sorted(
+        [i.split(":") for i in morph if not i.startswith("st:")]
+    )
+    d = {}
+    for k, g in itertools.groupby(x, key=lambda x: x[0]):
+        d[k] = [i[1] for i in g]
+    return d
 
 
 class Lemmatizer:
@@ -58,12 +77,14 @@ class Lemmatizer:
             rule_lemmatize = RuleLemmatizer()
 
         # ajoute l'extension si elle n'existe pas
-        if not Token.has_extension("viceverser"):
-            Token.set_extension("viceverser", default=None)
+        if not spacy.tokens.token.Token.has_extension("viceverser"):
+            spacy.tokens.token.Token.set_extension(
+                "viceverser", default=None
+            )
 
         # instanciation des objets utilisés par le lemmatizer
-        self.lookups = Lookups()
-        self.hobj = HunSpell(fp_dic, fp_aff)
+        self.lookups = spacy.lookups.Lookups()
+        self.hobj = hunspell.HunSpell(fp_dic, fp_aff)
         self.nlp = nlp
         self.pos_priorities = pos_rules
         self.rule_lemmatize = rule_lemmatize
@@ -210,6 +231,7 @@ class Lemmatizer:
         tagsprio = self.pos_priorities[upos]
         for t in tagsprio:
             if t in d.keys():
+                d[t]["morph"] = morph_to_dict(d[t]["morph"])
                 return d[t]
         return None
 
