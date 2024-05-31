@@ -7,31 +7,34 @@ ce module propose une manière alternative de [lemmatiser](https://spacy.io/api/
 part-of-speech
 --------------
 
-ce module est fait pour être utilisé dans une pipeline spacy, et je l'ai écrit parce les modèles actuellement (avril 2024) proposés par spacy ne correspondaient pas à mes besoins. outre la difficulté qu'ils ont à lemmatiser des textes utilisant l'écriture inclusive et les mots composés, l'un des défauts de ces modèles est qu'ils sont parfois assez imprécis dans l'assignation des _part-of-speech tags_. les verbes à l'impératifs présents sont par exemple systématiquement taggés comme étant des noms. or, la lemmatisation dépend des _part-of-speech tags_: le lemme de `sommes (noun)` est "somme" tandis que le lemme de `sommes (verb)` est "être".
+ce module est fait pour être utilisé dans une pipeline spacy, et je l'ai écrit parce les modèles actuellement (avril 2024) proposés par spacy ne correspondaient pas à mes besoins. outre la difficulté qu'ils ont à lemmatiser des textes utilisant l'écriture inclusive et les mots composés, l'un des défauts de ces modèles est qu'ils sont parfois assez imprécis dans l'assignation des _part-of-speech tags_. les verbes à l'impératifs présents sont par exemple systématiquement taggés comme étant des noms. or, la lemmatisation dépend des _part-of-speech tags_: le lemme de `sommes (noun)` est _somme_ tandis que le lemme de `sommes (verb)` est _être_.
 la pseudo-solution que je propose est la suivante:
 
-```
+```python
 tags = {"verb": [
-    "aux",  # les verbes sont souvent confondus avec les auxiliaires. je place donc "aux" tout en haut de la liste.
-    "noun",  # et quelques fois, les verbes sont confondus avec des nouns.
+    # tout en haut de chaque liste: le tag lui-même.
+    "verb", 
+    # les verbes sont souvent confondus avec les auxiliaires.
+    # je place donc "aux" tout en haut de la liste.
+    "aux",
+    # quelques fois, les verbes sont confondus avec des nouns.
+    "noun",  
     # ...
-    # "punct"  # les verbes ne sont jamais confondus avec de la ponctuation, je peux donc mettre ponctuation tout en bas de la liste.
-    ],
-    "noun": [
-        "verb",  # souvent, un mot taggé comme 'noun' est en fait un verbe à l'infinitif, je mets donc 'verb' tout en haut de la liste des mots taggés comme 'noun'.
-        # ...
+    # les verbes ne sont jamais confondus avec de la ponctuation.
+    # je peux donc mettre ponctuation tout en bas de la liste.
+    "punct",
     ],
     # ..
 }
 ```
 
-un exemple: admettons que dans la phrase "Parle vite!", le modèle considère que "Parle" est un nom. la fonction de lemmatisation va utiliser hunspell pour regarder si "parle" est une forme connue. comme c'est le cas, la fonction prends la liste de priorité pour le tag "nom". elle commence ainsi:
+un exemple: admettons que dans la phrase _Parle vite!_, le modèle considère que _Parle_ est un nom. la fonction de lemmatisation va utiliser hunspell pour regarder si _parle_ est une forme connue. comme c'est le cas, la fonction prends la liste de priorité pour le tag _nom_. elle commence ainsi:
 
 ```python
 ["noun", "verb", "adj", "..."]
 ```
 
-la fonction prend, dans l'ordre, chacun de ces tags et regarde si un lemme dans le lexique hunspell lui correspond. comme aucun lemme ne correspond à "parle (nom)", la fonction essaie avec "parle (verbe)" et il y a un résultat ("parler") qui devient donc le lemme du mot. pour que cela puisse fonctionner, il faut donc que le lexique (dans hunspell) attribue aux mots un (ou plusieurs) _part-of-speech_ via l'attribut `po:`.
+la fonction prend, dans l'ordre, chacun de ces tags et regarde si un lemme dans le lexique hunspell lui correspond. comme aucun lemme ne correspond à _parle (nom)_, la fonction essaie avec _parle (verbe)_ et il y a un résultat (_parler_) qui devient donc le lemme du mot. pour que cela puisse fonctionner, il faut donc que le lexique (dans hunspell) attribue aux mots un (ou plusieurs) _part-of-speech_ via l'attribut `po:`.
 
 mots composés
 -------------
