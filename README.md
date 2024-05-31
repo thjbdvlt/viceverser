@@ -1,12 +1,29 @@
-lemmatisation du français avec [hunspell](http://hunspell.github.io/) pour [spacy](https://spacy.io/api).
+lemmatisation du français avec [hunspell](http://hunspell.github.io/)[^1] pour [spacy](https://spacy.io/api).
 
-ce module propose une manière alternative de réaliser la [lemmatisation]() dans une [pipeline]() spacy, en s'appuyant essentiellement sur HunSpell. l'idée est de tirer parti de la facilité avec laquelle HunSpell permet de d'adapter un lexique à un contexte linguistique spécifique, par exemple en ajoutant des mots ou en définissant des règles de flexions (par exemple pour l'écriture inclusive).
+ce module propose une manière alternative de [lemmatiser](https://spacy.io/api/lemmatizer) des mots en tirant parti de la facilité avec laquelle on peut, grâce à hunspell, remanier des lexiques, par exemple en ajoutant des mots ou en définissant de nouvelles règles de flexions (par exemple pour l'écriture inclusive).
+
+[^1]: hunspell est un programme qui effectue des corrections orthographiques (utilisé notamment par libreoffice, openoffice, firefox). mais il réalise en même temps une analyse grammaticale des mots.
 
 part-of-speech
 --------------
 
 ce module est fait pour être utilisé dans une pipeline spacy, et je l'ai écrit parce les modèles actuellement (avril 2024) proposés par spacy ne correspondaient pas à mes besoins. outre la difficulté qu'ils ont à lemmatiser des textes utilisant l'écriture inclusive et les mots composés, l'un des défauts de ces modèles est qu'ils sont parfois assez imprécis dans l'assignation des _part-of-speech tags_. les verbes à l'impératifs présents sont par exemple systématiquement taggés comme étant des noms. or, la lemmatisation dépend des _part-of-speech tags_: le lemme de `sommes (noun)` est "somme" tandis que le lemme de `sommes (verb)` est "être".
-la pseudo-solution que je propose est la suivante: à chaque _pos tag_ est associé une liste d'autres tags ordonnés par proximité (et susceptibilité d'être confondus).
+la pseudo-solution que je propose est la suivante:
+
+```
+tags = {"verb": [
+    "aux",  # les verbes sont souvent confondus avec les auxiliaires. je place donc "aux" tout en haut de la liste.
+    "noun",  # et quelques fois, les verbes sont confondus avec des nouns.
+    # ...
+    # "punct"  # les verbes ne sont jamais confondus avec de la ponctuation, je peux donc mettre ponctuation tout en bas de la liste.
+    ],
+    "noun": [
+        "verb",  # souvent, un mot taggé comme 'noun' est en fait un verbe à l'infinitif, je mets donc 'verb' tout en haut de la liste des mots taggés comme 'noun'.
+        # ...
+    ],
+    # ..
+}
+```
 
 un exemple: admettons que dans la phrase "Parle vite!", le modèle considère que "Parle" est un nom. la fonction de lemmatisation va utiliser hunspell pour regarder si "parle" est une forme connue. comme c'est le cas, la fonction prends la liste de priorité pour le tag "nom". elle commence ainsi:
 
