@@ -102,6 +102,6 @@ pip install .
 dependancies
 ------------
 
-- spacy
+- [spacy](https://spacy.io/api)
 - [pyhunspell](https://github.com/pyhunspell/pyhunspell)
 - optionnelle: [informifier](https://github.com/thjbdvlt/informifier)
