@@ -2,6 +2,14 @@ import re
 
 
 def default_list(nlp):
+    """Récupère la liste des upos possibles dans le morphologizer.
+
+    Args:
+        nlp: le modèle de langue chargé par spacy.
+
+    Returns dict[str, list]: les upos associés aux autres upos par ordre de priorité.
+    """
+
     from viceverser.francais import pos_priorities as pp
 
     postags = get_pos_tag_pipe(nlp=nlp, pipename="morphologizer")
@@ -16,12 +24,15 @@ def default_list(nlp):
 def list_pos_priorities(
     postags, similarities: dict, default_priority: list[str]
 ) -> None:
-    """construit un dictionnaire de proximitié des pos tags.
+    """Construit un dictionnaire de proximitié des pos tags.
 
-    `similarities`:  un dictionnaire qui attribue, à chaque pos-tag une liste de pos-tags proches.
-    `default_priority`:  une liste de priorités par défault qui sera utilisée pour compléter `similarities`.
+    Args:
+        similarities (dict):  un dictionnaire qui attribue, à chaque pos-tag une liste de pos-tags proches.
+        default_priority (list):  une liste de priorités par défault qui sera utilisée pour compléter `similarities`.
 
-    exemple:
+    Returns (None)
+
+    Exemple:
         similarities={"verb": ["aux"], "cconj": ["sconj", "det"]}
         default_priority=["noun", "verb", "pron"]
 
@@ -61,7 +72,14 @@ def list_pos_priorities(
 def get_pos_tag_pipe(
     nlp, pipename: str = "morphologizer"
 ) -> list[str]:
-    """récupère la liste des part-of-speech tags d'un pipe component (par défault: le morphologizer)."""
+    """Récupère la liste des part-of-speech tags d'un pipe component.
+
+    Args:
+        nlp: le modèle de langue chargé par spacy.
+        pipename (str): le pipeline component dans lequel récupérer les tags (par défault: le morphologizer).
+
+    Returns list[str]: la liste de part-of-speech tags.
+    """
 
     re_pos = re.compile(r"POS=(\w+)")
     a = []

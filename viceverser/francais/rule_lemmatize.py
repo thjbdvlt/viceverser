@@ -6,11 +6,18 @@ class RuleLemmatizer:
         self.inform = informifier.Informitif()
 
     def rule_lemmatize(self, word: str, upos: str) -> str:
-        """lemmatise un mot à l'aide de règles spécifiques à son POS.
+        """Lemmatise un mot à l'aide de règles spécifiques à son POS.
 
-        - verb: reconstitue l'infinitif d'un verbe.
-        - noun+adj: enlève un éventuel "s" et "x" final.
-        dans les autres cas, retourne simplement le mot lui-même, sans modification.
+        Args:
+            word (str): le mot.
+            upos (str): le part-of-speech du mot.
+
+        Returns (str): le lemme proposé.
+
+        Règles relatives au part-of-speech:
+            - verb: reconstitue l'infinitif d'un verbe.
+            - noun+adj: enlève un éventuel "s" et "x" final.
+            - dans les autres cas, retourne simplement le mot lui-même, sans modification.
         """
 
         if upos in ("verb", "aux") and word[-2:] != "er":

@@ -6,30 +6,32 @@ b) s'il s'agit d'un mot composé (avec un ou plusieurs trait(s) d'union(s)), dé
 
 from hunspell import HunSpell
 from spacy.lookups import Lookups
-from typing import Union, Callable
-from spacy.tokens.doc import Doc
 from spacy.tokens.token import Token
 
 
 class Lemmatizer:
-    """lemmatise des documents en utilisant hunspell."""
+    """Lemmatise des documents en utilisant HunSpell."""
 
     def __init__(
         self,
         nlp,
-        fp_dic: str,
-        fp_aff: str,
-        exc: dict[dict[str:str]] = None,
-        pos_rules: dict[str:list] = None,
-        rule_lemmatize: Callable = None,
+        fp_dic,
+        fp_aff,
+        exc=None,
+        pos_rules=None,
+        rule_lemmatize=None,
     ):
-        """crée un objet pour lemmatiser une série de documents.
+        """Crée un objet pour lemmatiser une série de documents.
 
-        nlp:  la pipeline spacy avec le modèle, vocab, etc.
-        fp_dic:  fichier .dic pour hunspell (lexique).
-        fp_aff:  fichier .aff pour hunspell (règles de flexions).
+        Args:
+            nlp:  le modèle de langue chargé par spacy
+            fp_dic (str):  fichier .dic pour hunspell (lexique).
+            fp_aff (str):  fichier .aff pour hunspell (règles de flexions).
 
-        les mots du lexique hunspell doivent avoir l'attribut `po:` (part-of-speech).
+        Returns (None)
+
+        Note:
+            Les mots du lexique hunspell doivent avoir l'attribut `po:` (part-of-speech).
 
         pour initier le lemmatiser, j'instancie différents objets qui vont me servir pour la lemmatisation:
             - un objet `Lookups` dans lequel mettre des tables d'accessions rapides, pour éviter de répéter inutilement des opérations.
@@ -79,7 +81,14 @@ class Lemmatizer:
                 t.set(strings[word], {"stem": lemme, "morph": None})
 
     def find_lemma(self, word, norm, upos) -> str:
-        """trouve le lemme d'un mot.
+        """Trouve le lemme d'un mot.
+
+        Args:
+            word (str): le mot.
+            norm (int): la hash value de la norme du mot.
+            upos (str): le part-of-speech du mot.
+
+        Returns (str): le lemme proposé.
 
         plusieurs méthodes sont essayées successivement:
             1. première solution, la plus simple: si le mot est dans la table, alors retourne le lemme correspondant. (idéalement, il faudrait faire qqch avec le part-of-speech ici, même pour la table. typiquement pour sommes/somme.)
@@ -107,7 +116,15 @@ class Lemmatizer:
         return y
 
     def find_lemma_composed(self, word, norm, upos):
-        """trouve le lemme d'un mot composé."""
+        """Trouve le lemme d'un mot composé.
+
+        Args:
+            word (str): le mot.
+            norm (int): la hash value de la norme du mot.
+            upos (str): le part-of-speech du mot.
+
+        Returns (str): le lemme proposé.
+        """
 
         l = self.lookups.get_table(upos)
         strings = self.strings
@@ -142,10 +159,14 @@ class Lemmatizer:
             l.set(composednorm, y)
             return y
 
-    def search_lemma_hunspell(
-        self, word: str, upos: str
-    ) -> Union[tuple[str, str], None]:
+    def search_lemma_hunspell(self, word, upos):
         """cherche un lemme correspondant au mot dans un lexique hunspell.
+
+        Args:
+            word (str): le mot.
+            upos (str): le part-of-speech du mot.
+
+        Returns (str, None): le lemme proposé.
 
         si un lemme avec la même catégorie grammaticale (part-of-speech tag) est trouvé, alors il est retourné. sinon, cherche dans l'ordre des upos les plus proches du upos du mot. (si le mot correspond à une entrée, un lemme sera de toute façon retourné, si possible avec la même catégorie grammaticale.)
 
@@ -192,27 +213,42 @@ class Lemmatizer:
                 return d[t]
         return None
 
-    def set_lemma(self, token: Token) -> None:
-        """détermine le lemme d'un token."""
+    def set_lemma(self, token) -> None:
+        """Assigne un lemme à un token.
 
-        word: str = token.norm_
-        norm: int = token.norm
-        upos: str = token.pos_.lower()
+        Args:
+            token (Token): le token.
+
+        Returns (None)
+
+        Note:
+            l'attribut `token.lemma_` est modifié par cette méthode.
+        """
+
+        word = token.norm_
+        norm = token.norm
+        upos = token.pos_.lower()
         x = self.lookups.get_table(upos).get(norm)
         if x is not None:
             token.lemma_ = x["stem"]
             token._.viceverser = x["morph"]
             return
         elif "-" in token.norm_:
-            fn: Callable = self.find_lemma_composed
+            fn = self.find_lemma_composed
         else:
-            fn: Callable = self.find_lemma
+            fn = self.find_lemma
         d = fn(word=word, norm=norm, upos=upos)
         token.lemma_ = d["stem"]
         token._.viceverser = d["morph"]
 
-    def __call__(self, doc: Doc) -> Doc:
-        """attribue un lemme à chaque token d'un doc."""
+    def __call__(self, doc):
+        """Attribue un lemme à chaque token d'un doc.
+
+        Args:
+            doc (Doc): le doc.
+
+        Returns (Doc): le doc.
+        """
 
         for token in doc:
             self.set_lemma(token)

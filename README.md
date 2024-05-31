@@ -1,26 +1,6 @@
 lemmatisation du français avec [hunspell](http://hunspell.github.io/) pour [spacy](https://spacy.io/api).
 
-pourquoi
---------
-
-le format de HunSpell, avec ses fichiers `.dic` et `.aff`, étant facile à éditer pour correspondre à des usages linguistiques spécifiques (règles de flexions pour l'écriture inclusive, ajout de mots, etc.), il peut en partie remplacer (pour la lemmatisation) l'objet `Vocab` dans les cas où l'on ne souhaite (ou ne veut) pas entraîner un modèle.
-
-mots composés
--------------
-
-les lemmes des mots composés ("artistes-peintres", "autrice-compositrice-interprète") sont obtenus par la concaténation des lemmes de leurs composants: "artistes-peintres" deviendra "artiste-peintres", les deux mots "artistes" et "peintres" ayant été mis au singulier. si le lexique considère que "auteurice" est le lemme de "autrice", alors "autrice-compositrice" deviendra "auteurice-compositeurice".
-
-l'avantage de cette méthode est qu'elle ne nécessite pas de connaître à l'avance tous les mots composés possibles (virtuellement infinis). elle peut toutefois produire des résultats déconcertants qui pourront nécessiter l'utilisation d'une liste d'exceptions, sans quoi "vice-versa" deviendra par exemple "vice-verser":
-
-| mot          | lemme          |
-| --           | --             |
-| vice-versa   | vice-verser    |
-| peut-être    | pouvoir-être   |
-| soi-disant   | soi-dire       |
-| gratte-ciel  | gratter-ciel   |
-| compte-rendu | compter-rendre |
-| vis-à-vis    | voir-à-voir    |
-| c'est-à-dire | ce être-à-dire |
+ce module propose une manière alternative de réaliser la [lemmatisation]() dans une [pipeline]() spacy, en s'appuyant essentiellement sur HunSpell. l'idée est de tirer parti de la facilité avec laquelle HunSpell permet de d'adapter un lexique à un contexte linguistique spécifique, par exemple en ajoutant des mots ou en définissant des règles de flexions (par exemple pour l'écriture inclusive).
 
 part-of-speech
 --------------
@@ -36,10 +16,31 @@ un exemple: admettons que dans la phrase "Parle vite!", le modèle considère qu
 
 la fonction prend, dans l'ordre, chacun de ces tags et regarde si un lemme dans le lexique hunspell lui correspond. comme aucun lemme ne correspond à "parle (nom)", la fonction essaie avec "parle (verbe)" et il y a un résultat ("parler") qui devient donc le lemme du mot. pour que cela puisse fonctionner, il faut donc que le lexique (dans hunspell) attribue aux mots un (ou plusieurs) _part-of-speech_ via l'attribut `po:`.
 
+mots composés
+-------------
+
+les lemmes des mots composés (_artistes-peintres_, _autrice-compositrice-interprète_) sont obtenus par la concaténation des lemmes de leurs composants: _artistes-peintres_ deviendra _artiste-peintres_, les deux mots _artistes_ et _peintres_ ayant été mis au singulier. si le lexique considère que _auteurice_ est le lemme de _autrice_, alors _autrice-compositrice_ deviendra _auteurice-compositeurice_.
+
+| mot          | lemme          |
+| --           | --             |
+|autrices-compositrices|auteurices-compositeurices|
+
+l'avantage de cette méthode est qu'elle ne nécessite pas de connaître à l'avance tous les mots composés possibles (virtuellement infinis). elle peut toutefois produire des résultats déconcertants (et intéressants):
+
+| mot          | lemme          |
+| --           | --             |
+| peut-être    | pouvoir-être   |
+| soi-disant   | soi-dire       |
+| gratte-ciel  | gratter-ciel   |
+| compte-rendu | compter-rendre |
+| vis-à-vis    | voir-à-voir    |
+| c'est-à-dire | ce être-à-dire |
+| vice-versa   | vice-verser    |
+
 rule lemmatizer
 ---------------
 
-dans certains cas, le mot ne correspond à aucune forme répertoriée dans le lexique hunspell. pour ces cas, une fonction est définie qui construit le lemme par application de règles (_rule-based lemmatization_). celle proposée par défaut est relative au _part-of-speech tag_: s'il s'agit d'un adjectif ou d'un nom, j'enlève simplement les pluriels en `s` ou `x`, s'il s'agit d'un verbe, je considère d'un verbe du premier groupe car la quasi-totalité des _néo-verbes_ sont des verbes du premier groupe, et j'essaie de reconstruire l'infinitif du verbe à partir de sa forme (ce que je fais en utilisant un autre mini-module que j'ai écrit pour ça: [informifier]), dans tous les autres cas, le lemme est le mot inchangé.
+dans certains cas, le mot ne correspond à aucune forme répertoriée dans le lexique hunspell. pour ces cas, une fonction est définie qui construit le lemme par application de règles (_rule-based lemmatization_). celle proposée par défaut est relative au _part-of-speech tag_: s'il s'agit d'un adjectif ou d'un nom, j'enlève simplement les pluriels en `s` ou `x`, s'il s'agit d'un verbe, je considère d'un verbe du premier groupe car la quasi-totalité des _néo-verbes_ sont des verbes du premier groupe, et j'essaie de reconstruire l'infinitif du verbe à partir de sa forme (ce que je fais en utilisant un autre mini-module que j'ai écrit pour ça: [informifier](https://github.com/thjbdvlt/informifier)), dans tous les autres cas, le lemme est le mot inchangé.
 
 morphologie
 -----------
