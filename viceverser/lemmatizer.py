@@ -280,8 +280,7 @@ class Lemmatizer:
 @spacy.Language.factory(
     "viceverser_lemmatizer",
     default_config={
-        "fp_dic": None,
-        "fp_aff": None,
+        "name": "viceverser_lemmatizer",
         "exc": None,
         "pos_rules": None,
     },
