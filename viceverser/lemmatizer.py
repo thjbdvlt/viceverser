@@ -275,3 +275,29 @@ class Lemmatizer:
         for token in doc:
             self.set_lemma(token)
         return doc
+
+
+@spacy.Language.factory(
+    "viceverser_lemmatizer",
+    default_config={
+        "fp_dic": None,
+        "fp_aff": None,
+        "exc": None,
+        "pos_rules": None,
+    },
+)
+def create_viceverser_lemmatizer(
+    nlp,
+    name,
+    fp_dic,
+    fp_aff,
+    exc,
+    pos_rules,
+):
+    return Lemmatizer(
+        nlp=nlp,
+        fp_dic=fp_dic,
+        fp_aff=fp_aff,
+        exc=exc,
+        pos_rules=pos_rules,
+    )
