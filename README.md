@@ -76,16 +76,6 @@ pour l'ajouter comme composant d'une _pipeline_:
 import spacy
 import viceverser
 
-@spacy.Language.factory("viceverser_lemmatizer")
-def create_hunspell_lemmatizer(nlp, name="viceverser_lemmatizer"):
-    fp_dic = "/chemin/vers/exemple/fr_xii.dic"
-    fp_aff = "/chemin/vers/exemple/fr_xii.aff"
-    return viceverser.Lemmatizer(
-        nlp=nlp,
-        fp_dic=paths.fp_dic,
-        fp_aff=paths.fp_aff
-    )
-
 nlp = spacy.load("fr_core_news_lg")
 nlp.add_pipe("viceverser_lemmatizer", after="morphologizer")
 ```

@@ -11,12 +11,15 @@ def morph_to_feats(morph, lookup=viceverser.default.LOOKUP):
 
     Args:
         morph (str):  the morphological analysis as provided by hunspell.
-        lookup (dict):  a lookup table to translate to feats.
+        lookup (dict):  a lookup table to translate to feats. each values must be a dict itself:
+
+        Example:
+            {"is:ipre": {"Tense": "Pres", "Mood": "Ind"}}
 
     Returns (str):  morphological analysis in FEATS format.
     """
 
-    d = {'is': set()}
+    d = {"is": set()}
     for i in morph.split():
         if i.startswith("is:"):
             if i in lookup:
@@ -26,10 +29,10 @@ def morph_to_feats(morph, lookup=viceverser.default.LOOKUP):
                     else:
                         d[k] = {v}
             else:
-                d['is'].add(i[3:])
+                d["is"].add(i[3:])
 
-    if len(d['is']) == 0:
-        d.pop('is')
+    if len(d["is"]) == 0:
+        d.pop("is")
 
     for k, v in d.items():
         d[k] = sorted(v)
@@ -38,15 +41,3 @@ def morph_to_feats(morph, lookup=viceverser.default.LOOKUP):
     for k in sorted(d.keys()):
         feats.append(FIELD_SEP.join((k, VALUE_SEP.join(d[k]))))
     return FEATURE_SEP.join(feats)
-
-
-def uniq_feats_key(features):
-    b = {}
-    for k, v in features:
-        if k not in b:
-            b[k] = set()
-        else:
-            b[k].add(v)
-    for k in b:
-        b[k] = sorted(b[k])
-    return b

@@ -5,12 +5,13 @@ class RuleLemmatizer:
     def __init__(self):
         self.inform = informifier.Informitif()
 
-    def rule_lemmatize(self, word: str, upos: str) -> str:
+    def rule_lemmatize(self, word: str, upos: str, hobj=None, **kwargs) -> str:
         """Lemmatise un mot à l'aide de règles spécifiques à son POS.
 
         Args:
             word (str): le mot.
             upos (str): le part-of-speech du mot.
+            hobj (Hunspell):  le lexique Hunspell.
 
         Returns (str): le lemme proposé.
 
