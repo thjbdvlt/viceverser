@@ -88,20 +88,19 @@ class Lemmatizer:
 
         l = self.lookups.get_table(upos)
 
-        x = l.get(norm)
-        if x is not None:
-            return x
+        if norm in l:
+            return l[norm]
 
         x = self.search_lemma_hunspell(word=word, upos=upos)
-        if x is not None:
-            l.set(norm, x)
+        if x:
+            l[norm] = x
             return x
 
         x, morph = self.rule_lemmatize(word=word, upos=upos)
         if morph:
             morph = viceverser.feats.morph_to_feats(morph)
-        y = {"stem": x, "morph": morph}
-        l.set(norm, y)
+        y = {"stem": x, "morph": morph, "pos": None}
+        l[norm] = y
         return y
 
     def find_lemma_composed(self, word, norm, upos):
@@ -214,6 +213,7 @@ class Lemmatizer:
                     result["morph"]
                 )
                 return d[tag]
+
         if len(d) == 0:
             return None
         result = list(d)[0]
