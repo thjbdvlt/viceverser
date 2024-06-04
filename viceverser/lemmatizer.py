@@ -208,7 +208,7 @@ class Lemmatizer:
                 d[tag] = {
                     "stem": stem,
                     "morph": " ".join(is_),
-                    "pos": po_tags,
+                    "pos": sorted(po_tags),
                 }
 
         tagsprio = self.pos_priorities[upos]
