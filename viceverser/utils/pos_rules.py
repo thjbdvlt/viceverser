@@ -1,4 +1,4 @@
-import re
+import spacy.parts_of_speech
 
 
 def default_list(nlp):
@@ -12,7 +12,9 @@ def default_list(nlp):
 
     from viceverser.francais import pos_priorities as pp
 
-    postags = get_pos_tag_pipe(nlp=nlp, pipename="morphologizer")
+    postags = list(
+        set([v.lower() for v in spacy.parts_of_speech.NAMES.values()])
+    )
     priorities = list_pos_priorities(
         postags=postags,
         similarities=pp.POS_SIMILARITIES,
@@ -56,30 +58,14 @@ def list_pos_priorities(postags, similarities, default_priority):
             prio.extend(missing)
         else:
             prio = default_priority
+
+        # chaque tag est le premier de sa propre liste
         prio.remove(tag)
         prio.insert(0, tag)
+
+        # pour les combinaison ('adp', [tag]), utilisée pour les mots composés, 'adp' est le premier de la liste, suivi de la liste associée au tag.
         similarities[("adp", tag)] = ["adp"] + [
             i for i in prio if i != "adp"
         ]
         similarities[tag] = prio
     return similarities
-
-
-def get_pos_tag_pipe(nlp, pipename="morphologizer"):
-    """Récupère la liste des part-of-speech tags d'un pipe component.
-
-    Args:
-        nlp: le modèle de langue chargé par spacy.
-        pipename (str): le pipeline component dans lequel récupérer les tags (par défault: le morphologizer).
-
-    Returns list[str]: la liste de part-of-speech tags.
-    """
-
-    re_pos = re.compile(r"POS=(\w+)")
-    a = []
-    labels = nlp.get_pipe(pipename).labels
-    for l in labels:
-        r = re_pos.search(l)
-        if r:
-            a.append(r.group(1).lower())
-    return sorted(set(a))
