@@ -4,7 +4,7 @@ import spacy.lookups
 import spacy.tokens.token
 import viceverser.default
 import viceverser.feats
-import viceverser.francais
+import viceverser.francais.lemmes_exceptions
 import viceverser.utils.pos_rules
 
 
@@ -68,7 +68,10 @@ class Lemmatizer:
         for pos in exc.keys():
             t = self.lookups.get_table(pos)
             for word, lemme in exc[pos].items():
-                t.set(strings[word], {"stem": lemme, "morph": None})
+                t.set(
+                    strings[word],
+                    {"stem": lemme, "morph": None, "pos": pos},
+                )
 
     def find_lemma(self, word, norm, upos) -> str:
         """Trouve le lemme d'un mot.
@@ -187,13 +190,13 @@ class Lemmatizer:
 
         for lex_entry in x:
             attrs = lex_entry.decode().split()
-            po_tags = []
+            po_tags = set()
             stems = []
             is_ = []
             for a in attrs:
                 prefix = a[:3]
                 if prefix == "po:":
-                    po_tags.append(a[3:])
+                    po_tags.add(a[3:])
                 elif prefix == "st:":
                     stems.append(a[3:])
                 elif prefix == "is:":
@@ -234,11 +237,9 @@ class Lemmatizer:
         word = token.norm_
         norm = token.norm
         upos = token.pos_.lower()
-        x = self.lookups.get_table(upos).get(norm)
-        if x is not None:
-            token.lemma_ = x["stem"]
-            token._.viceverser = x["morph"]
-            return
+        table = self.lookups.get_table(upos)
+        if norm in table:
+            return table[norm]
         elif "-" in token.norm_:
             fn = self.find_lemma_composed
         else:
@@ -295,9 +296,9 @@ class Lemmatizer:
 
         for token in doc:
             d = self.get_lemma(token)
-            token.lemma_ = d.pop("stem")
-            token._.vv_pos = d.pop("pos")
-            token._.vv_morph = d
+            token.lemma_ = d["stem"]
+            token._.vv_pos = d["pos"]
+            token._.vv_morph = d["morph"]
         return doc
 
 
