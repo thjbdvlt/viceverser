@@ -182,35 +182,45 @@ class Lemmatizer:
 
         d = {}
         x = ho.analyze(word)
+
         for lex_entry in x:
             attrs = lex_entry.decode().split()
             po_tags = []
             stems = []
             is_ = []
             for a in attrs:
-                if a[:3] == "po:":
+                prefix = a[:3]
+                if prefix == "po:":
                     po_tags.append(a[3:])
-                elif a[:3] == "st:":
+                elif prefix == "st:":
                     stems.append(a[3:])
-                elif a[:3] == "is:":
+                elif prefix == "is:":
                     is_.append(a)
             if len(stems) == 0:
-                return None
+                continue
             stem = stems[0]
-            for t in po_tags:
-                d[t] = {
+            for tag in po_tags:
+                d[tag] = {
                     "stem": stem,
                     "morph": " ".join(is_),
                     "pos": po_tags,
                 }
+
         tagsprio = self.pos_priorities[upos]
-        for t in tagsprio:
-            if t in d.keys():
-                d[t]["morph"] = viceverser.feats.morph_to_feats(
-                    d[t]["morph"]
+        for tag in tagsprio:
+            if tag in d.keys():
+                result = d[tag]
+                result["morph"] = viceverser.feats.morph_to_feats(
+                    result["morph"]
                 )
-                return d[t]
-        return None
+                return d[tag]
+        if len(d) == 0:
+            return None
+        result = list(d)[0]
+        result["morph"] = viceverser.feats.morph_to_feats(
+            result["morph"]
+        )
+        return result
 
     def get_lemma(self, token):
         """Assigne un lemme à un token.
