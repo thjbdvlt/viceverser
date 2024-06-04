@@ -123,13 +123,15 @@ class Lemmatizer:
         l = self.lookups.get_table(upos)
         strings = self.strings
 
-        x = l.get(norm)
-        if x is not None:
-            return x
-
-        keyhaslemme = l.get(norm)
-        if keyhaslemme is not None:
-            return keyhaslemme
+        if norm in l:
+            return l[norm]
+        # x = l.get(norm)
+        # if x is not None:
+        #     return x
+        #
+        # keyhaslemme = l.get(norm)
+        # if keyhaslemme is not None:
+        #     return keyhaslemme
 
         subwords = [
             self.find_lemma(
@@ -142,13 +144,14 @@ class Lemmatizer:
         ]
         lemme_ = "-".join([s["stem"] for s in subwords])
         composednorm = strings[lemme_]
-        x = l.get(composednorm)
-        if x is not None:
-            l.set(norm, x)
-            return x
+        if composednorm in l:
+            lemme = l[composednorm]
+            l[norm] = lemme
+            return lemme
         else:
-            morph = [s["morph"] for s in subwords]
-            y = {"stem": lemme_, "morph": morph}
+            # morph = [s["morph"] for s in subwords]
+            morph = [s["morph"] for s in subwords][-1]
+            y = {"stem": lemme_, "morph": morph, "pos": upos}
             l.set(norm, y)
             l.set(composednorm, y)
             return y
