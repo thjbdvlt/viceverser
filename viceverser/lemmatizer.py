@@ -1,13 +1,12 @@
-"""lemmatisation du français avec hunspell pour spacy
-
-a) s'il s'agit d'un mot simple, utiliser la fonction `stem` de hunspell pour trouver le lemme (arrivions -> arriver). si possible, trouver un lemme qui a la même catégorie grammaticale (ex. conseillons -> conseiller (verbe)), mais parfois le pos-tagging fait des erreurs, et alors il faudra trouver un lemme d'une autre catégorie grammaticale.
-b) s'il s'agit d'un mot composé (avec un ou plusieurs trait(s) d'union(s)), découper le mots en ses différents composant et analyser comme en a) chacun de ces composants, puis les aggréger. par exemple: "auteur-compositeur" -> ["auteurice", "compositeurice"] -> "auteurice-compositeurice".
-"""
-
 import hunspell
 import spacy.lookups
 import spacy.tokens.token
+from spacy.morphology import Morphology
 import itertools
+
+VALUE_SEP = Morphology.VALUE_SEP
+FIELD_SEP = Morphology.FIELD_SEP
+FEATURE_SEP = Morphology.FEATURE_SEP
 
 
 def morph_to_dict(morph):
@@ -26,6 +25,25 @@ def morph_to_dict(morph):
     for k, g in itertools.groupby(x, key=lambda x: x[0]):
         d[k] = [i[1] for i in g]
     return d
+
+
+def morph_to_feats(morph):
+    """Convertit une description morphologique en format FEATS.
+
+    Args:
+        morph (str):  la morphologie telle que fournie par hunspell.
+
+    Returns (str):  les annotations au format FEATS.
+    """
+
+    return FIELD_SEP.join(
+        sorted(
+            [
+                f"{k}{FEATURE_SEP}{VALUE_SEP.join(sorted(v))}"
+                for k, v in morph_to_dict(morph).items()
+            ]
+        )
+    )
 
 
 class Lemmatizer:

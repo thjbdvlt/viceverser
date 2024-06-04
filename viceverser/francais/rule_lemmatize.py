@@ -21,12 +21,12 @@ class RuleLemmatizer:
         """
 
         if upos in ("verb", "aux") and word[-2:] != "er":
-            lemma, _ = self.inform(word)
-            return lemma
+            lemma, like = self.inform(word)
+            return lemma  # il faudrait tout retourner et faire l'analyse morphologique
         elif word[-1] in ("x", "s") and upos in ("noun", "adj"):
-            return word[:-1]
+            return word[:-1], {"is:pl"}
         else:
-            return word
+            return word, {}
 
     def __call__(self, **kwargs):
         return self.rule_lemmatize(**kwargs)

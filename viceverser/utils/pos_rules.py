@@ -21,16 +21,12 @@ def default_list(nlp):
     return priorities
 
 
-def list_pos_priorities(
-    postags, similarities: dict, default_priority: list[str]
-) -> None:
+def list_pos_priorities(postags, similarities, default_priority):
     """Construit un dictionnaire de proximitié des pos tags.
 
     Args:
         similarities (dict):  un dictionnaire qui attribue, à chaque pos-tag une liste de pos-tags proches.
         default_priority (list):  une liste de priorités par défault qui sera utilisée pour compléter `similarities`.
-
-    Returns (None)
 
     Exemple:
         similarities={"verb": ["aux"], "cconj": ["sconj", "det"]}
@@ -69,9 +65,7 @@ def list_pos_priorities(
     return similarities
 
 
-def get_pos_tag_pipe(
-    nlp, pipename: str = "morphologizer"
-) -> list[str]:
+def get_pos_tag_pipe(nlp, pipename="morphologizer"):
     """Récupère la liste des part-of-speech tags d'un pipe component.
 
     Args:
