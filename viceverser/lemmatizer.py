@@ -71,11 +71,11 @@ class Lemmatizer:
         """Trouve le lemme d'un mot.
 
         Args:
-            word (str): le mot.
-            norm (int): la hash value de la norme du mot.
-            upos (str): le part-of-speech du mot.
+            word (str):  le mot.
+            norm (int):  la hash value de la norme du mot.
+            upos (str):  le part-of-speech du mot.
 
-        Returns (str): le lemme proposé.
+        Returns (str):  le lemme proposé.
 
         plusieurs méthodes sont essayées successivement:
             1. première solution, la plus simple: si le mot est dans la table, alors retourne le lemme correspondant. (idéalement, il faudrait faire qqch avec le part-of-speech ici, même pour la table. typiquement pour sommes/somme.)
@@ -108,9 +108,9 @@ class Lemmatizer:
         """Trouve le lemme d'un mot composé.
 
         Args:
-            word (str): le mot.
-            norm (int): la hash value de la norme du mot.
-            upos (str): le part-of-speech du mot.
+            word (str):  le mot.
+            norm (int):  la hash value de la norme du mot.
+            upos (str):  le part-of-speech du mot.
 
         Returns (str): le lemme proposé.
         """
@@ -152,10 +152,10 @@ class Lemmatizer:
         """cherche un lemme correspondant au mot dans un lexique hunspell.
 
         Args:
-            word (str): le mot.
-            upos (str): le part-of-speech du mot.
+            word (str):  le mot.
+            upos (str):  le part-of-speech du mot.
 
-        Returns (str, None): le lemme proposé.
+        Returns (str, None):  le lemme proposé.
 
         si un lemme avec la même catégorie grammaticale (part-of-speech tag) est trouvé, alors il est retourné. sinon, cherche dans l'ordre des upos les plus proches du upos du mot. (si le mot correspond à une entrée, un lemme sera de toute façon retourné, si possible avec la même catégorie grammaticale.)
 
@@ -212,7 +212,7 @@ class Lemmatizer:
                 return d[t]
         return None
 
-    def set_lemma(self, token) -> None:
+    def get_lemma(self, token):
         """Assigne un lemme à un token.
 
         Args:
@@ -237,8 +237,7 @@ class Lemmatizer:
         else:
             fn = self.find_lemma
         d = fn(word=word, norm=norm, upos=upos)
-        token.lemma_ = d["stem"]
-        token._.viceverser = d["morph"]
+        return d
 
     def rule_lemmatize(self, word: str, upos: str) -> str:
         """Lemmatise un mot à l'aide de règles spécifiques à son POS.
@@ -282,13 +281,15 @@ class Lemmatizer:
         """Attribue un lemme à chaque token d'un doc.
 
         Args:
-            doc (Doc): le doc.
+            doc (Doc):  le doc.
 
-        Returns (Doc): le doc.
+        Returns (Doc):  le doc.
         """
 
         for token in doc:
-            self.set_lemma(token)
+            d = self.get_lemma(token)
+            token.lemma_ = d["stem"]
+            token._.viceverser = d["morph"]
         return doc
 
 
