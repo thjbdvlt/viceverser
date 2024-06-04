@@ -8,8 +8,11 @@ import viceverser.francais
 import viceverser.utils.pos_rules
 
 
-if not spacy.tokens.token.Token.has_extension("viceverser"):
-    spacy.tokens.token.Token.set_extension("viceverser", default=None)
+if not spacy.tokens.token.Token.has_extension("vv_pos"):
+    spacy.tokens.token.Token.set_extension("vv_pos", default=None)
+
+if not spacy.tokens.token.Token.has_extension("vv_morph"):
+    spacy.tokens.token.Token.set_extension("vv_morph", default=None)
 
 
 class Lemmatizer:
@@ -214,13 +217,7 @@ class Lemmatizer:
                 )
                 return d[tag]
 
-        if len(d) == 0:
-            return None
-        result = list(d)[0]
-        result["morph"] = viceverser.feats.morph_to_feats(
-            result["morph"]
-        )
-        return result
+        return None
 
     def get_lemma(self, token):
         """Assigne un lemme à un token.
@@ -298,8 +295,9 @@ class Lemmatizer:
 
         for token in doc:
             d = self.get_lemma(token)
-            token.lemma_ = d["stem"]
-            token._.viceverser = d["morph"]
+            token.lemma_ = d.pop("stem")
+            token._.vv_pos = d.pop("pos")
+            token._.vv_morph = d
         return doc
 
 
