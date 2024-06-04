@@ -4,6 +4,12 @@ import spacy.lookups
 import spacy.tokens.token
 import viceverser.default
 import viceverser.feats
+import viceverser.francais
+import viceverser.utils.pos_rules
+
+
+if not spacy.tokens.token.Token.has_extension("viceverser"):
+    spacy.tokens.token.Token.set_extension("viceverser", default=None)
 
 
 class Lemmatizer:
@@ -26,8 +32,6 @@ class Lemmatizer:
             fp_aff (str):  fichier .aff pour hunspell (règles de flexions).
             exc (dict):  des exceptions.
 
-        Returns (None)
-
         Note:
             Les mots du lexique hunspell doivent avoir l'attribut `po:` (part-of-speech).
 
@@ -39,21 +43,11 @@ class Lemmatizer:
             - un objet `Informitif`, issu d'un petit module que j'ai écrit pour ça et qui sert à trouver l'infinitif d'un verbe à partir de l'une de ses formes conjuguée, et de déterminer à quelle sous-groupe il appartient (parmi les verbes du premier groupe). l'idée est de pouvoir, en rencontrant un nouveau verbe, donner à hunspell un modèle pour construire toutes les formes possibles que ce verbe peut prendre.
         """
 
-        # valeurs par défaut des arguments
         if exc is None:
-            from viceverser.francais.lemmes_exceptions import exc
+            exc = viceverser.francais.lemmes_exceptions.exc
 
-            exc = exc
         if pos_rules is None:
-            from viceverser.utils.pos_rules import default_list
-
-            pos_rules = default_list(nlp)
-
-        # ajoute l'extension si elle n'existe pas
-        if not spacy.tokens.token.Token.has_extension("viceverser"):
-            spacy.tokens.token.Token.set_extension(
-                "viceverser", default=None
-            )
+            pos_rules = viceverser.utils.pos_rules.default_list(nlp)
 
         # instanciation des objets utilisés par le lemmatizer
         self.lookups = spacy.lookups.Lookups()
