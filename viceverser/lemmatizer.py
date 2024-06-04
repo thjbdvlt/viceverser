@@ -2,6 +2,7 @@ import hunspell
 import spacy.lookups
 import spacy.tokens.token
 import viceverser.default
+import viceverser.feats
 
 
 class Lemmatizer:
@@ -108,8 +109,19 @@ class Lemmatizer:
             l.set(norm, x)
             return x
 
-        x = self.rule_lemmatize(word=word, upos=upos)
-        y = {"stem": x, "morph": None}
+        x, like_or_morph = self.rule_lemmatize(word=word, upos=upos)
+        if upos == "verb":
+            self.hobj.add_with_affix(x, like_or_morph)
+            _morph = self.hobj.analyze(word)
+            if len(_morph) > 0:
+                _morph = _morph[0].decode()
+            else:
+                _morph = None
+        else:
+            _morph = like_or_morph
+        if _morph:
+            _morph = viceverser.feats.morph_to_feats(_morph)
+        y = {"stem": x, "morph": like_or_morph}
         l.set(norm, y)
         return y
 
@@ -195,16 +207,23 @@ class Lemmatizer:
             attrs = lex_entry.decode().split()
             po_tags = []
             stems = []
+            is_ = []
             for a in attrs:
                 if a[:3] == "po:":
                     po_tags.append(a[3:])
                 elif a[:3] == "st:":
                     stems.append(a[3:])
+                elif a[:3] == "is:":
+                    is_.append(a)
             if len(stems) == 0:
                 return None
             stem = stems[0]
             for t in po_tags:
-                d[t] = {"stem": stem, "morph": attrs}
+                d[t] = {
+                    "stem": stem,
+                    "morph": " ".join(is_),
+                    "pos": po_tags,
+                }
         tagsprio = self.pos_priorities[upos]
         for t in tagsprio:
             if t in d.keys():
@@ -258,29 +277,7 @@ class Lemmatizer:
 
 @spacy.Language.factory(
     "viceverser_lemmatizer",
-    default_config={
-        "fp_dic": None,
-        "fp_aff": None,
-        "name": "viceverser_lemmatizer",
-        "exc": None,
-        "pos_rules": None,
-        "lookup_feats": None,
-    },
+    default_config={"name": "viceverser_lemmatizer"},
 )
-def create_viceverser_lemmatizer(
-    nlp,
-    name,
-    fp_dic,
-    fp_aff,
-    exc,
-    pos_rules,
-    lookup_feats,
-):
-    return Lemmatizer(
-        nlp=nlp,
-        fp_dic=fp_dic,
-        fp_aff=fp_aff,
-        exc=exc,
-        pos_rules=pos_rules,
-        lookup_feats=lookup_feats,
-    )
+def create_viceverser_lemmatizer(nlp, name):
+    return Lemmatizer(nlp=nlp)

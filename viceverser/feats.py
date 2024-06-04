@@ -16,15 +16,37 @@ def morph_to_feats(morph, lookup=viceverser.default.LOOKUP):
     Returns (str):  morphological analysis in FEATS format.
     """
 
-    x = []
-    is_ = []
+    d = {'is': set()}
     for i in morph.split():
-        if i.startswith('is:'):
-            tag = i[3:]
-            if tag in lookup:
-                x.append(lookup[tag])
+        if i.startswith("is:"):
+            if i in lookup:
+                for k, v in lookup[i].items():
+                    if k in d:
+                        d[k].add(v)
+                    else:
+                        d[k] = {v}
             else:
-                is_.append(tag)
-    is_ = FIELD_SEP.join('is', VALUE_SEP.join(is_))
-    x.extend(is_)
-    return FEATURE_SEP.join(x)
+                d['is'].add(i[3:])
+
+    if len(d['is']) == 0:
+        d.pop('is')
+
+    for k, v in d.items():
+        d[k] = sorted(v)
+
+    feats = []
+    for k in sorted(d.keys()):
+        feats.append(FIELD_SEP.join((k, VALUE_SEP.join(d[k]))))
+    return FEATURE_SEP.join(feats)
+
+
+def uniq_feats_key(features):
+    b = {}
+    for k, v in features:
+        if k not in b:
+            b[k] = set()
+        else:
+            b[k].add(v)
+    for k in b:
+        b[k] = sorted(b[k])
+    return b
