@@ -1,4 +1,5 @@
 import hunspell
+import informifier
 import spacy.lookups
 import spacy.tokens.token
 import viceverser.default
@@ -15,7 +16,6 @@ class Lemmatizer:
         fp_aff=viceverser.default.FP_AFF,
         exc=None,
         pos_rules=None,
-        rule_lemmatize=None,
         lookup_feats=viceverser.default.LOOKUP,
     ):
         """Crée un objet pour lemmatiser une série de documents.
@@ -24,6 +24,7 @@ class Lemmatizer:
             nlp:  le modèle de langue chargé par spacy
             fp_dic (str):  fichier .dic pour hunspell (lexique).
             fp_aff (str):  fichier .aff pour hunspell (règles de flexions).
+            exc (dict):  des exceptions.
 
         Returns (None)
 
@@ -47,12 +48,6 @@ class Lemmatizer:
             from viceverser.utils.pos_rules import default_list
 
             pos_rules = default_list(nlp)
-        if rule_lemmatize is None:
-            from viceverser.francais.rule_lemmatize import (
-                RuleLemmatizer,
-            )
-
-            rule_lemmatize = RuleLemmatizer()
 
         # ajoute l'extension si elle n'existe pas
         if not spacy.tokens.token.Token.has_extension("viceverser"):
@@ -65,7 +60,6 @@ class Lemmatizer:
         self.hobj = hunspell.HunSpell(fp_dic, fp_aff)
         self.nlp = nlp
         self.pos_priorities = pos_rules
-        self.rule_lemmatize = rule_lemmatize
         strings = nlp.vocab.strings
         self.strings = strings
 
@@ -109,19 +103,10 @@ class Lemmatizer:
             l.set(norm, x)
             return x
 
-        x, like_or_morph = self.rule_lemmatize(word=word, upos=upos)
-        if upos == "verb":
-            self.hobj.add_with_affix(x, like_or_morph)
-            _morph = self.hobj.analyze(word)
-            if len(_morph) > 0:
-                _morph = _morph[0].decode()
-            else:
-                _morph = None
-        else:
-            _morph = like_or_morph
-        if _morph:
-            _morph = viceverser.feats.morph_to_feats(_morph)
-        y = {"stem": x, "morph": like_or_morph}
+        x, morph = self.rule_lemmatize(word=word, upos=upos)
+        if morph:
+            morph = viceverser.feats.morph_to_feats(morph)
+        y = {"stem": x, "morph": morph}
         l.set(norm, y)
         return y
 
@@ -260,6 +245,44 @@ class Lemmatizer:
         d = fn(word=word, norm=norm, upos=upos)
         token.lemma_ = d["stem"]
         token._.viceverser = d["morph"]
+
+    def rule_lemmatize(self, word: str, upos: str) -> str:
+        """Lemmatise un mot à l'aide de règles spécifiques à son POS.
+
+        Args:
+            word (str): le mot.
+            upos (str): le part-of-speech du mot.
+            hobj (Hunspell):  le lexique Hunspell.
+
+        Returns (tuple[str, str]): le lemme proposé et une description morphologique.
+
+        Règles relatives au part-of-speech:
+            - verb: reconstitue l'infinitif d'un verbe.
+            - noun+adj: enlève un éventuel "s" et "x" final.
+            - dans les autres cas, retourne simplement le mot lui-même, sans modification.
+        """
+
+        if upos in ("verb", "aux") and word[-2:] != "er":
+            lemma, like = informifier.informifier(word)
+            self.hobj.add_with_affix(lemma, like)
+            morph = self.hobj.analyze(word)
+            if len(morph) > 0:
+                morph = morph[0].decode()
+            else:
+                morph = None
+
+        elif upos in ("noun", "adj"):
+            if word[-1] in ("x", "s"):
+                morph = "is:pl"
+                lemma = word[:-1]
+            else:
+                morph = "is:sg"
+                lemma = word
+
+        else:
+            lemma = word
+            morph = None
+        return lemma, morph
 
     def __call__(self, doc):
         """Attribue un lemme à chaque token d'un doc.

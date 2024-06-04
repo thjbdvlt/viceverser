@@ -2,7 +2,7 @@ import spacy.parts_of_speech
 
 
 def default_list(nlp):
-    """Récupère la liste des upos possibles dans le morphologizer.
+    """Récupère la liste des upos possibles.
 
     Args:
         nlp: le modèle de langue chargé par spacy.
