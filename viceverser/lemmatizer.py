@@ -1,49 +1,7 @@
 import hunspell
 import spacy.lookups
 import spacy.tokens.token
-from spacy.morphology import Morphology
-import itertools
-
-VALUE_SEP = Morphology.VALUE_SEP
-FIELD_SEP = Morphology.FIELD_SEP
-FEATURE_SEP = Morphology.FEATURE_SEP
-
-
-def morph_to_dict(morph):
-    """Convert a morphological analysis from Hunspell to a dict.
-
-    Args:
-        morph (list[str]): the morphological analysis as provided by hunspell.
-
-    Returns (dict): a dict containing the morphological analysis, organised in a 'key-values' format.
-    """
-
-    x = sorted(
-        [i.split(":") for i in morph if not i.startswith("st:")]
-    )
-    d = {}
-    for k, g in itertools.groupby(x, key=lambda x: x[0]):
-        d[k] = [i[1] for i in g]
-    return d
-
-
-def morph_to_feats(morph):
-    """Convertit une description morphologique en format FEATS.
-
-    Args:
-        morph (str):  la morphologie telle que fournie par hunspell.
-
-    Returns (str):  les annotations au format FEATS.
-    """
-
-    return FIELD_SEP.join(
-        sorted(
-            [
-                f"{k}{FEATURE_SEP}{VALUE_SEP.join(sorted(v))}"
-                for k, v in morph_to_dict(morph).items()
-            ]
-        )
-    )
+import viceverser.default
 
 
 class Lemmatizer:
@@ -52,11 +10,12 @@ class Lemmatizer:
     def __init__(
         self,
         nlp,
-        fp_dic,
-        fp_aff,
+        fp_dic=viceverser.default.FP_DIC,
+        fp_aff=viceverser.default.FP_AFF,
         exc=None,
         pos_rules=None,
         rule_lemmatize=None,
+        lookup_feats=viceverser.default.LOOKUP,
     ):
         """Crée un objet pour lemmatiser une série de documents.
 
@@ -249,7 +208,9 @@ class Lemmatizer:
         tagsprio = self.pos_priorities[upos]
         for t in tagsprio:
             if t in d.keys():
-                d[t]["morph"] = morph_to_dict(d[t]["morph"])
+                d[t]["morph"] = viceverser.feats.morph_to_feats(
+                    d[t]["morph"]
+                )
                 return d[t]
         return None
 
@@ -298,9 +259,12 @@ class Lemmatizer:
 @spacy.Language.factory(
     "viceverser_lemmatizer",
     default_config={
+        "fp_dic": None,
+        "fp_aff": None,
         "name": "viceverser_lemmatizer",
         "exc": None,
         "pos_rules": None,
+        "lookup_feats": None,
     },
 )
 def create_viceverser_lemmatizer(
@@ -310,6 +274,7 @@ def create_viceverser_lemmatizer(
     fp_aff,
     exc,
     pos_rules,
+    lookup_feats,
 ):
     return Lemmatizer(
         nlp=nlp,
@@ -317,4 +282,5 @@ def create_viceverser_lemmatizer(
         fp_aff=fp_aff,
         exc=exc,
         pos_rules=pos_rules,
+        lookup_feats=lookup_feats,
     )
