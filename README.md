@@ -13,6 +13,8 @@ import viceverser
 
 nlp = spacy.load("fr_core_news_lg")
 nlp.add_pipe("viceverser_lemmatizer", after="morphologizer")
+# fonctionne mieux si des part-of-speech sont attribués avant,
+# (en français, c'est le morphologizer qui les attribue).
 ```
 
 installation
