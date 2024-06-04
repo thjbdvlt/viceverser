@@ -125,14 +125,10 @@ class Lemmatizer:
 
         if norm in l:
             return l[norm]
-        # x = l.get(norm)
-        # if x is not None:
-        #     return x
-        #
-        # keyhaslemme = l.get(norm)
-        # if keyhaslemme is not None:
-        #     return keyhaslemme
 
+        subwords = [s for s in word.split("-") if s.strip() != ""]
+        if len(subwords) == 0:
+            return {"stem": "-", "pos": None, "morph": None}
         subwords = [
             self.find_lemma(
                 word=s,
