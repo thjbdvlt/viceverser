@@ -70,7 +70,7 @@ class Lemmatizer:
             for word, lemme in exc[pos].items():
                 t.set(
                     strings[word],
-                    {"stem": lemme, "morph": None, "pos": pos},
+                    {"stem": lemme, "morph": None, "pos": [pos]},
                 )
 
     def find_lemma(self, word, norm, upos) -> str:
@@ -104,7 +104,7 @@ class Lemmatizer:
 
         x, morph = self.rule_lemmatize(word=word, upos=upos)
         if morph:
-            morph = viceverser.feats.morph_to_feats(morph)
+            morph = viceverser.feats.morph_to_dict(morph)
         y = {"stem": x, "morph": morph, "pos": None}
         l[norm] = y
         return y
@@ -145,9 +145,11 @@ class Lemmatizer:
             l[norm] = lemme
             return lemme
         else:
-            # morph = [s["morph"] for s in subwords]
             morph = [s["morph"] for s in subwords][-1]
-            y = {"stem": lemme_, "morph": morph, "pos": upos}
+            pos = [s["pos"] for s in subwords][-1]
+            # y = {"stem": lemme_, "morph": morph, "pos": upos}
+            # idéalement: récupérer le POS du dernier mot?
+            y = {"stem": lemme_, "morph": morph, "pos": pos}
             l.set(norm, y)
             l.set(composednorm, y)
             return y
@@ -214,7 +216,7 @@ class Lemmatizer:
         for tag in tagsprio:
             if tag in d.keys():
                 result = d[tag]
-                result["morph"] = viceverser.feats.morph_to_feats(
+                result["morph"] = viceverser.feats.morph_to_dict(
                     result["morph"]
                 )
                 return d[tag]

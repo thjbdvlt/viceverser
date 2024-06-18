@@ -41,3 +41,24 @@ def morph_to_feats(morph, lookup=viceverser.default.LOOKUP):
     for k in sorted(d.keys()):
         feats.append(FIELD_SEP.join((k, VALUE_SEP.join(d[k]))))
     return FEATURE_SEP.join(feats)
+
+
+def morph_to_dict(morph, lookup=viceverser.default.LOOKUP):
+    d = {"is": set()}
+    for i in morph.split():
+        if i.startswith("is:"):
+            if i in lookup:
+                for k, v in lookup[i].items():
+                    if k in d:
+                        d[k].add(v)
+                    else:
+                        d[k] = {v}
+            else:
+                d["is"].add(i[3:])
+
+    if len(d["is"]) == 0:
+        d.pop("is")
+
+    for k, v in d.items():
+        d[k] = sorted(v)
+    return d

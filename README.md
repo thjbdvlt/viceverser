@@ -98,4 +98,4 @@ dependancies
 
 - [spacy](https://spacy.io/api)
 - [pyhunspell](https://github.com/pyhunspell/pyhunspell)
-- optionnelle: [informifier](https://github.com/thjbdvlt/informifier)
+- [informifier](https://github.com/thjbdvlt/informifier)
