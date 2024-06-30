@@ -1,5 +1,5 @@
-from viceverser.lemmatizer import Lemmatizer
-import viceverser.default
+import viceverser.feats
+import viceverser.lemmatizer
 
-Lemmatizer = Lemmatizer
-get_default_hobj = viceverser.default.get_default_hobj
+Lemmatizer = viceverser.lemmatizer.Lemmatizer
+VunSpell = viceverser.feats.VunSpell
