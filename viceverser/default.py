@@ -1,4 +1,5 @@
 import pkgutil
+import hunspell
 import importlib
 import os
 from spacy.morphology import Morphology
@@ -20,3 +21,7 @@ for _line in _lookup.split("\n"):
             name, value = feature.split(Morphology.FIELD_SEP)
             d[name] = value
         LOOKUP[k] = d
+
+
+def get_default_hobj():
+    return hunspell.HunSpell(FP_DIC, FP_AFF)
