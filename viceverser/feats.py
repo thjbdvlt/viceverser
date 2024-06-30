@@ -127,3 +127,15 @@ class VunSpell(hunspell.HunSpell):
                 else:
                     d[p].append(i)
         return d
+
+    def getvalues(self, mot, flag="is"):
+        x = []
+        for analyse in self.analyze(mot):
+            x.extend(
+                [
+                    i[3:]
+                    for i in analyse.decode().split()
+                    if i.startswith(f"{flag}:")
+                ]
+            )
+        return set(x)
