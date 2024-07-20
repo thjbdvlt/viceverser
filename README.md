@@ -9,7 +9,6 @@ pour l'ajouter comme composant d'une _pipeline_:
 
 ```python
 import spacy
-import viceverser
 
 nlp = spacy.load("fr_core_news_lg")
 nlp.add_pipe("viceverser_lemmatizer", after="morphologizer")
