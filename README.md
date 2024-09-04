@@ -20,16 +20,7 @@ installation
 ------------
 
 ```bash
-# le module dépend d'un autre mini-module: informifier,
-# pour l'analyse des néo-verbes (qui permet ici de récupérer 
-# l'analyse morphologique de verbes hors lexique).
-git clone https://github.com/thjbdvlt/informifier informifier
-cd informifier
-pip install .
-
-git clone https://github.com/thjbdvlt/viceverser viceverser
-cd viceverser
-pip install .
+pip install git+https://github.com/thjbdvlt/spacy-viceverser
 ```
 
 [^1]: hunspell est un programme qui effectue des corrections orthographiques (utilisé notamment par libreoffice, openoffice, firefox). mais il réalise en même temps une analyse grammaticale des mots.

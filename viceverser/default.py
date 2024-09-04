@@ -1,5 +1,4 @@
 import pkgutil
-import hunspell
 import importlib
 import os
 from spacy.morphology import Morphology
