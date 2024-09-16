@@ -6,7 +6,8 @@ description = "french lemmatizer with hunspell for spacy"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
-    "informifier @ git+https://github.com/thjbdvlt/informifier"
+    "informifier @ git+https://github.com/thjbdvlt/informifier",
+    "hunspell"
 ]
 
 [project.urls]
