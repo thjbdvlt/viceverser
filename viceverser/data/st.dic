@@ -1,5 +1,6 @@
-71241
+71248
 
+A4
 abaca/Es  po:noun is:mas
 abacule/Es  po:noun is:mas
 abader/  po:verb
@@ -2412,6 +2413,7 @@ amateur/_e  po:adj
 amateur/Es  po:adj is:epi
 amateurisme/Es  po:noun is:mas
 amateur·rice/,,ri  po:noun
+amateur·rice/,,rire  po:adj
 amathie/Es  po:noun is:fem
 amatir/f0p+  po:verb
 amaurose/Es  po:noun is:fem
@@ -4809,6 +4811,7 @@ arsouiller/a0p+  po:verb
 ars/  po:noun is:mas is:inv
 artefact/Es  po:noun is:mas
 artéfact/Es  po:noun is:mas
+artefactualité/Es  po:noun
 artel/Es  po:noun is:mas
 artémia/Es  po:noun is:fem
 artémise/Es  po:noun is:fem
@@ -5736,6 +5739,7 @@ autodiscipline/Es  po:noun is:fem
 autodrome/Es  po:noun is:mas
 autoécole/Es  po:noun is:fem
 autoécologie/Es  po:noun is:fem
+autoéditer/a0p+
 autoédition/Es  po:noun is:fem
 autoentrepreneur·euse/,,rs  po:noun
 autoentrepreneuriat/Es  po:noun is:mas
@@ -5864,6 +5868,7 @@ autoréalisateur·rice/,,ri  po:adj
 autoréférence/Es  po:noun is:fem
 autoréférentiel·le/,,ll  po:adj
 autoréflexif·ve/fv  po:adj
+autoréfutant·e/,,_e
 autoréglage/Es  po:noun is:mas
 autorégulateur·rice/,,ri  po:adj
 autorégulation/Es  po:noun is:fem
@@ -11770,6 +11775,7 @@ chachacha/Es  po:noun is:mas
 chachlik/Es  po:noun is:mas
 chacone/Es  po:noun is:fem
 chaconne/Es  po:noun is:fem
+chacun·e/,,_e  po:pron is:sg
 chacune/  po:pron is:sg is:fem
 chacun/  po:pron is:sg is:mas
 chadburn/Es  po:noun is:mas
@@ -28005,7 +28011,6 @@ filoutage/Es  po:noun is:mas
 filouter/a0p+  po:verb
 filouterie/Es  po:noun is:fem
 filovirus/  po:noun is:mas is:inv
-filsdeputerie/Es  po:noun is:fem
 fils/  po:noun is:mas is:inv
 filtrable/Es  po:adj is:epi
 filtrage/Es  po:noun is:mas
@@ -55176,6 +55181,8 @@ quel·le/,,ll  po:det
 quelque/Es  po:det is:epi
 quelquefois/  po:adv
 quelque/  po:adv
+quelqu'/  po:sconj is:eli st:quoique
+quelqu/  po:sconj is:eli st:quoique
 quémande/Es  po:noun is:fem
 quémander/a0p+  po:verb
 quémandeur·euse/,,rs  po:noun
