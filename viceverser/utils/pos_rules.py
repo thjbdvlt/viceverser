@@ -24,7 +24,7 @@ def default_list(nlp):
 
 
 def list_pos_priorities(postags, similarities, default_priority):
-    """Construit un dictionnaire de proximitié des pos tags.
+    """Construit un dictionnaire de proximitié des POS tags.
 
     Args:
         similarities (dict):  un dictionnaire qui attribue, à chaque pos-tag une liste de pos-tags proches.
@@ -51,6 +51,7 @@ def list_pos_priorities(postags, similarities, default_priority):
     default_priority.extend(
         [i for i in postags if i not in default_priority]
     )
+
     for tag in default_priority:
         if tag in similarities.keys():
             prio = similarities[tag]
@@ -68,4 +69,5 @@ def list_pos_priorities(postags, similarities, default_priority):
             i for i in prio if i != "adp"
         ]
         similarities[tag] = prio
+
     return similarities
