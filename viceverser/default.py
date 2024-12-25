@@ -5,8 +5,8 @@ from spacy.morphology import Morphology
 
 _datapath = importlib.resources.files("viceverser").joinpath("data")
 
-FP_DIC = os.path.join(_datapath, "st.dic")
-FP_AFF = os.path.join(_datapath, "st.aff")
+FP_DIC = os.path.join(_datapath, "fr_ud.dic")
+FP_AFF = os.path.join(_datapath, "fr_ud.aff")
 LOOKUP = {}
 
 _sep = "\t"
