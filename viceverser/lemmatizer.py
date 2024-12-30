@@ -2,6 +2,7 @@ import hunspell
 import informifier
 import spacy.lookups
 import spacy.tokens.token
+from spacy.parts_of_speech import NAMES as POS_NAMES
 import viceverser.default
 import viceverser.feats
 import viceverser.francais.lemmes_exceptions
@@ -14,6 +15,8 @@ if not spacy.tokens.token.Token.has_extension("vv_pos"):
 
 if not spacy.tokens.token.Token.has_extension("vv_morph"):
     spacy.tokens.token.Token.set_extension("vv_morph", default=None)
+
+UPOS_LOWER = {i: POS_NAMES[i].lower() for i in POS_NAMES}
 
 
 class Lemmatizer:
@@ -148,7 +151,7 @@ class Lemmatizer:
 
         word = token.norm_
         norm = token.norm
-        upos = token.pos_.lower()
+        upos = UPOS_LOWER[token.pos]
         table = self.lookups.get_table(upos)
 
         if norm in table:

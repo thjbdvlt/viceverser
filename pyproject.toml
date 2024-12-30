@@ -13,6 +13,9 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/thjbdvlt/viceverser"
 
+[project.entry-points.spacy_factories]
+viceverser_lemmatizer = "viceverser.lemmatizer:create_viceverser_lemmatizer"
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
