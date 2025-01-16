@@ -81,6 +81,7 @@ class Lemmatizer:
             self.find_lemma(
                 word=s,
                 norm=strings[s],
+                # pfx? instead of adp?
                 upos=("adp", upos),
             )
             for s in subwords
