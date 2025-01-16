@@ -1,3 +1,0 @@
-include viceverser/data/*.tsv
-include viceverser/data/*.dic
-include viceverser/data/*.aff

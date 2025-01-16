@@ -10,9 +10,9 @@ POS_DEFAULT_PRIORITY = [
 
 POS_SIMILARITIES = {
     "aux": ["verb"],
-    "verb": ["aux"],
-    "noun": ["verb", "aux", "adj"],
-    "adj": ["noun"],
+    "verb": ["aux", "adj", "noun"],
+    "noun": ["adj", "verb"],
+    "adj": ["noun", "verb"],
     "det": ["cconj", "sconj", "pron", "adp"],
     "pron": ["det", "cconj", "sconj", "adp"],
 }

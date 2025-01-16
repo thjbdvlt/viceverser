@@ -1,44 +1,38 @@
 import hunspell
 import informifier
 import spacy.lookups
-import spacy.tokens.token
+from spacy.tokens import Doc
 from spacy.parts_of_speech import NAMES as POS_NAMES
-import viceverser.default
-import viceverser.feats
 import viceverser.francais.lemmes_exceptions
 import viceverser.utils.pos_rules
-from viceverser.default import FP_AFF, FP_DIC
-
-
-if not spacy.tokens.token.Token.has_extension("vv_pos"):
-    spacy.tokens.token.Token.set_extension("vv_pos", default=None)
-
-if not spacy.tokens.token.Token.has_extension("vv_morph"):
-    spacy.tokens.token.Token.set_extension("vv_morph", default=None)
-
-UPOS_LOWER = {i: POS_NAMES[i].lower() for i in POS_NAMES}
+from typing import Union, Callable
 
 
 class Lemmatizer:
     def __init__(
         self,
         nlp,
-        fp_dic=FP_DIC,
-        fp_aff=FP_AFF,
+        dic: str,
+        aff: str,
         exc=None,
         pos_rules=None,
+        pfx: str = "pfx",
     ):
+
         if exc is None:
             exc = viceverser.francais.lemmes_exceptions.exc
 
         if pos_rules is None:
             pos_rules = viceverser.utils.pos_rules.default_list(nlp)
 
+        self.upos_lower = {i: POS_NAMES[i].lower() for i in POS_NAMES}
+
         self.lookups = spacy.lookups.Lookups()
-        self.hobj = hunspell.HunSpell(fp_dic, fp_aff)
+        self.hobj = hunspell.HunSpell(dic, aff)
         self.nlp = nlp
         self.pos_priorities = pos_rules
         self.strings = nlp.vocab.strings
+        self.pfx = pfx
 
         for i in self.pos_priorities.keys():
             self.lookups.add_table(i, {})
@@ -49,91 +43,106 @@ class Lemmatizer:
                 t.set(self.strings[word], (lemme, [pos], None))
 
     def find_lemma(self, word, norm, upos) -> str:
-        l = self.lookups.get_table(upos)
+        """Find the lemma of a word."""
 
-        if norm in l:
-            return l[norm]
+        # get the table associated to the word's pos
+        table = self.lookups.get_table(upos)
 
-        x = self.search_lemma_hunspell(word=word, upos=upos)
-        if x:
-            l[norm] = x
-            return x
+        # if the norm already is the table, returns the corresponding value
+        if norm in table:
+            return table[norm]
 
-        x, morph = self.rule_lemmatize(word=word, upos=upos)
+        # try to get word's lemma using hunspell
+        lemma = self.search_lemma_hunspell(word=word, upos=upos)
+        if lemma:
+            table[norm] = lemma
+            return lemma
 
-        y = (x, None, morph)
-        l[norm] = y
-        return y
+        # fallback using rule lemmatization if hunspell failed
+        lemma = self.rule_lemmatize(word=word, upos=upos)
+        table[norm] = lemma
+        return lemma
 
-    def find_lemma_composed(self, word: str, norm: int, upos: str):
-        l = self.lookups.get_table(upos)
+    def find_lemma_compound(self, word: str, norm: int, upos: str) -> str:
+        """Find the lemma of a hyphen-based compound word."""
+
+        # get the table (according to word's pos)
+        table = self.lookups.get_table(upos)
         strings = self.strings
 
-        if norm in l:
-            return l[norm]
+        # if the word already is in the table, returns corresponding value
+        if norm in table:
+            return table[norm]
 
+        # split the compound word into subwords
         subwords = [s for s in word.split("-") if s != ""]
 
+        # end function if empty
         if len(subwords) == 0:
             return ("-", None, None)
 
+        # find lemma for each subword
         subwords = [
             self.find_lemma(
                 word=s,
                 norm=strings[s],
-                # pfx? instead of adp?
-                upos=("adp", upos),
+                upos=(self.pfx, upos),
             )
             for s in subwords
         ]
 
+        # join sub-lemmas
         lemme_ = "-".join([s[0] for s in subwords])
-        composednorm = strings[lemme_]
+        compoundnorm = strings[lemme_]
 
-        if composednorm in l:
-            lemme = l[composednorm]
-            l[norm] = lemme
+        # check if lemma is in the table and add it if it's not
+        if compoundnorm in table:
+            lemme = table[compoundnorm]
+            table[norm] = lemme
             return lemme
 
-        else:
-            morph = [s[2] for s in subwords][-1]
-            pos = [s[1] for s in subwords][-1]
-            y = (lemme_, pos, morph)
-            l.set(norm, y)
-            l.set(composednorm, y)
-            return y
+        # pos = [s[1] for s in subwords][-1]
+        # pos = subwords[-1][1] # whyyy
+        # y = (lemme_, pos)
+        y = (lemme_, upos)
+        table.set(norm, y)
+        table.set(compoundnorm, y)
+        return y
 
     def search_lemma_hunspell(self, word, upos):
+        """Search for a lemma using Hunspell."""
         ho = self.hobj
 
-        if ho.spell(word) is False:
+        # end function if unknown word
+        if not ho.spell(word):
             return None
 
+        # analyze with hunspell
+        analysis = ho.analyze(word)
         d = {}
-        x = ho.analyze(word)
 
-        for lex_entry in x:
-            attrs = lex_entry.decode().split()
+        for lex_entry in analysis:
+            attrs = lex_entry.decode().split()  # TODO: do not decode
             po_tags = set()
-            stems = []
-            is_ = []
+            stem = None
             for a in attrs:
-                prefix = a[:3]
-                if prefix == "po:":
+                if a.startswith('po:'):
                     po_tags.add(a[3:])
-                elif prefix == "st:":
-                    stems.append(a[3:])
-                elif prefix == "is:":
-                    is_.append(a)
-            if len(stems) == 0:
-                continue
-            stem = stems[0]
-            for tag in po_tags:
-                d[tag] = (stem, sorted(po_tags), " ".join(is_))
+                elif a.startswith('st:'):
+                    if not stem:
+                        stem = a[3:]
+            if stem:
+                for tag in po_tags:
+                    d[tag] = (stem, sorted(po_tags))
 
+        # end function if empty dict
+        if not d:
+            return None
+
+        # chose the stem that has the best position in pos_priorities
         tagsprio = self.pos_priorities[upos]
         for tag in tagsprio:
-            if tag in d.keys():
+            if tag in d:
                 return d[tag]
 
         return None
@@ -152,13 +161,13 @@ class Lemmatizer:
 
         word = token.norm_
         norm = token.norm
-        upos = UPOS_LOWER[token.pos]
+        upos = self.upos_lower[token.pos]
         table = self.lookups.get_table(upos)
 
         if norm in table:
             return table[norm]
         elif "-" in word:
-            fn = self.find_lemma_composed
+            fn = self.find_lemma_compound
         else:
             fn = self.find_lemma
 
@@ -168,41 +177,25 @@ class Lemmatizer:
         if upos in ("verb", "aux") and not word.endswith("er"):
             lemma, like = informifier.informifier(word)
             self.hobj.add_with_affix(lemma, like)
-            morph = self.hobj.analyze(word)
-            if len(morph) > 0:
-                morph = morph[0].decode()
-            else:
-                morph = None
 
         elif upos in ("noun", "adj"):
             if word[-1] in ("x", "s"):
-                morph = "is:pl"
                 lemma = word[:-1]
 
             else:
-                morph = "is:sg"
                 lemma = word
 
         else:
             lemma = word
-            morph = None
 
-        return lemma, morph
+        return lemma
 
-    def __call__(self, doc):
-        """Attribue un lemme à chaque token d'un doc.
-
-        Args:
-            doc (Doc):  le doc.
-
-        Returns (Doc):  le doc.
-        """
+    def __call__(self, doc: Doc) -> Doc:
+        """Lemmatize a Doc."""
 
         for token in doc:
-            lemme, pos, morph = self.get_lemma(token)
-            token.lemma_ = lemme
-            token._.vv_pos = pos
-            token._.vv_morph = morph
+            token.lemma_ = self.get_lemma(token)
+
         return doc
 
 
@@ -210,5 +203,14 @@ class Lemmatizer:
     "viceverser_lemmatizer",
     default_config={"name": "viceverser_lemmatizer"},
 )
-def create_viceverser_lemmatizer(nlp, name):
-    return Lemmatizer(nlp=nlp)
+def create_viceverser_lemmatizer(
+    nlp,
+    name,
+    dic: Union[str, Callable],
+    aff: Union[str, Callable],
+):
+    if callable(dic):
+        dic = dic()
+    if callable(aff):
+        aff = aff()
+    return Lemmatizer(nlp, dic, aff)
