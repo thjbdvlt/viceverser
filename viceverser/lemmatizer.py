@@ -16,7 +16,7 @@ class Lemmatizer:
         aff: str,
         exc=None,
         pos_rules=None,
-        pfx: str = "pfx",
+        pfx: str = "adp",
     ):
 
         if exc is None:
@@ -39,8 +39,8 @@ class Lemmatizer:
 
         for pos in exc.keys():
             t = self.lookups.get_table(pos)
-            for word, lemme in exc[pos].items():
-                t.set(self.strings[word], (lemme, [pos], None))
+            for word, lemma in exc[pos].items():
+                t.set(self.strings[word], lemma)
 
     def find_lemma(self, word, norm, upos) -> str:
         """Find the lemma of a word."""
@@ -79,7 +79,7 @@ class Lemmatizer:
 
         # end function if empty
         if len(subwords) == 0:
-            return ("-", None, None)
+            return word
 
         # find lemma for each subword
         subwords = [
@@ -92,8 +92,8 @@ class Lemmatizer:
         ]
 
         # join sub-lemmas
-        lemme_ = "-".join([s[0] for s in subwords])
-        compoundnorm = strings[lemme_]
+        lemma = "-".join([s[0] for s in subwords])
+        compoundnorm = strings[lemma]
 
         # check if lemma is in the table and add it if it's not
         if compoundnorm in table:
@@ -101,13 +101,9 @@ class Lemmatizer:
             table[norm] = lemme
             return lemme
 
-        # pos = [s[1] for s in subwords][-1]
-        # pos = subwords[-1][1] # whyyy
-        # y = (lemme_, pos)
-        y = (lemme_, upos)
-        table.set(norm, y)
-        table.set(compoundnorm, y)
-        return y
+        table.set(norm, lemma)
+        table.set(compoundnorm, lemma)
+        return lemma
 
     def search_lemma_hunspell(self, word, upos):
         """Search for a lemma using Hunspell."""
@@ -122,28 +118,25 @@ class Lemmatizer:
         d = {}
 
         for lex_entry in analysis:
-            attrs = lex_entry.decode().split()  # TODO: do not decode
+            attrs = lex_entry.split()
             po_tags = set()
             stem = None
             for a in attrs:
-                if a.startswith('po:'):
+                if a.startswith(b'po:'):
                     po_tags.add(a[3:])
-                elif a.startswith('st:'):
+                elif a.startswith(b'st:'):
                     if not stem:
                         stem = a[3:]
             if stem:
                 for tag in po_tags:
-                    d[tag] = (stem, sorted(po_tags))
+                    d[tag.decode()] = stem
 
-        # end function if empty dict
         if not d:
             return None
 
-        # chose the stem that has the best position in pos_priorities
-        tagsprio = self.pos_priorities[upos]
-        for tag in tagsprio:
+        for tag in self.pos_priorities[upos]:
             if tag in d:
-                return d[tag]
+                return d[tag].decode()
 
         return None
 
@@ -162,16 +155,11 @@ class Lemmatizer:
         word = token.norm_
         norm = token.norm
         upos = self.upos_lower[token.pos]
-        table = self.lookups.get_table(upos)
 
-        if norm in table:
-            return table[norm]
-        elif "-" in word:
-            fn = self.find_lemma_compound
+        if "-" in word:
+            return self.find_lemma_compound(word, norm, upos)
         else:
-            fn = self.find_lemma
-
-        return fn(word=word, norm=norm, upos=upos)
+            return self.find_lemma(word, norm, upos)
 
     def rule_lemmatize(self, word: str, upos: str) -> str:
         if upos in ("verb", "aux") and not word.endswith("er"):
@@ -195,7 +183,6 @@ class Lemmatizer:
 
         for token in doc:
             token.lemma_ = self.get_lemma(token)
-
         return doc
 
 
