@@ -92,7 +92,7 @@ class Lemmatizer:
         ]
 
         # join sub-lemmas
-        lemma = "-".join([s[0] for s in subwords])
+        lemma = "-".join(subwords)
         compoundnorm = strings[lemma]
 
         # check if lemma is in the table and add it if it's not
