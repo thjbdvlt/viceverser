@@ -8,6 +8,24 @@ import viceverser.utils.pos_rules
 from typing import Union, Callable
 
 
+def analyze_word_with_prefix(analysis: list[bytes]):
+    """Analyze a compound word like "reparler", with prefix.
+    [b' pa:a st:a po:pfx pa:ambiances ( st:ambiance po:noun is:pl | st:ambiancer po:verb is:ipre is:spre is:2sg )]"""
+    # this function does nothing complicated and only manage simple cases. when a `|` symbol is encountered, the function ends.
+    # it manages cases like "prémangerions" or "XVVII".
+    parts = analysis.split()
+    st = []
+    for i in parts:
+        if i == b'|':
+            break
+        elif i.startswith(b"st:"):
+            st.append(i[3:])
+    if len(st) > 1:
+        return b"".join(st)
+    else:
+        return None
+
+
 class Lemmatizer:
     def __init__(
         self,
@@ -118,9 +136,15 @@ class Lemmatizer:
         d = {}
 
         for lex_entry in analysis:
+            # TODO: if "pa:" in analysis, special stuff. because things like "prévoir", that is a real verb but could also be a compound (pré-voir) are NOT ANALYZED as compound, there is no "pa:", thus there is no risk to generate errors.
+            if b"pa:" in lex_entry:
+                stem = analyze_word_with_prefix(lex_entry)
+                if stem:
+                    return stem.decode()
             attrs = lex_entry.split()
             po_tags = set()
             stem = None
+            # FIXME: this functions only keeps one word for compound words like "antisocial", which MUST NOT be lemmatized as "anti", as it is now.
             for a in attrs:
                 if a.startswith(b'po:'):
                     po_tags.add(a[3:])
